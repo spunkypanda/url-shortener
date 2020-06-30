@@ -1,9 +1,13 @@
 import { Controller, UseGuards, UseInterceptors, Body, Get, Param, Post, Delete, Put } from '@nestjs/common';
 import { ExecutionContext, Injectable, CanActivate, CallHandler, NestInterceptor, NestMiddleware } from '@nestjs/common';
 
-import { AppService } from './app.service';
-import { ShortenedURLDAO } from './short-url/url.interface';
-import { CreateURLRecordDTO, GetURLRecordDTO } from './short-url/url.interface';
+import { ShortURLService } from './short-url.service';
+import { ShortenedURLDAO, CreateURLRecordDTO, UpdateURLRecordDTO, GetURLRecordDTO } from './short-url.interface';
+
+import {
+  ApiTags,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -42,14 +46,17 @@ export class AnalyticsInterceptor implements NestInterceptor {
     const host = headers['host'];
     const mode = request.mode;
 
-    // console.log('ip addr:', request.ip);
-    console.log('headers::user-agent:', userAgent);
+    console.log();
+    console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
+    console.log('user-agent:', userAgent);
     console.log('mode:', mode);
     console.log('host:', host);
     console.log('referrer:', referrer);
     console.log('referrerPolicy:', referrerPolicy);
     console.log('redirect:', redirect);
     console.log('credentials:', credentials);
+    console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
+    console.log();
 
     // user-agent, http headers, time, ip, referrer
     return next.handle();
@@ -71,56 +78,67 @@ export class AnalyticsMiddleware implements NestMiddleware {
     const host = headers['host'];
     const mode = request.mode;
 
+    console.log();
+    console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
     // console.log('IP:', ip);
-    console.log('headers::user-agent:', userAgent);
+    console.log('user-agent:', userAgent);
     console.log('mode:', mode);
     console.log('host:', host);
     console.log('referrer:', referrer);
     console.log('referrerPolicy:', referrerPolicy);
     console.log('redirect:', redirect);
     console.log('credentials:', credentials);
-
+    console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
     console.log();
 
     return next();
   }
 }
 
-
+@ApiBearerAuth()
+@ApiTags('short_url')
 @Controller()
-export class AppController {
-  constructor(private readonly appService: AppService) {}
+export class ShortURLController {
+  constructor(private readonly shortUrlService: ShortURLService) {}
 
   @Get()
   @UseInterceptors(LoggingInterceptor)
   @UseInterceptors(AnalyticsInterceptor)
   async getHello(): Promise<string> {
-    return this.appService.getHello();
+    return this.shortUrlService.getHello();
   }
 
   @Post('links')
   // @UseGuards(AuthGuard)
   @UseInterceptors(LoggingInterceptor)
   @UseInterceptors(AnalyticsInterceptor)
-  async createShortenedURL(@Body() body: Readonly<CreateURLRecordDTO>): Promise<ShortenedURLDAO> {
-    return this.appService.createShortenedURLService(body.url);
+  async createShortenedURL(@Body() body: Readonly<CreateURLRecordDTO>): Promise<Partial<ShortenedURLDAO>> {
+    const createDTO = {
+      url: body.url,
+    };
+    return this.shortUrlService.create(createDTO);
   }
 
   @Get('links/:url_hash')
-  async getShortenedURL(@Param() params: Readonly<GetURLRecordDTO>): Promise<string> {
-    return this.appService.getShortenedURLService(params.url_hash);
+  @UseInterceptors(LoggingInterceptor)
+  @UseInterceptors(AnalyticsInterceptor)
+  async getShortenedURL(@Param() params: Readonly<GetURLRecordDTO>): Promise<any> {
+    return this.shortUrlService.findByUrlHash(params.url_hash);
   }
 
-  @Put('links')
-  @UseGuards(AuthGuard)
+  @Put('links/:url_hash')
+  // @UseGuards(AuthGuard)
   @UseInterceptors(LoggingInterceptor)
-  async updateShortenedURL(@Body() body: Readonly<CreateURLRecordDTO>): Promise<ShortenedURLDAO> {
-    return this.appService.updateShortenedURLService(body.url);
+  @UseInterceptors(AnalyticsInterceptor)
+  async updateShortenedURL(@Param() params: Readonly<UpdateURLRecordDTO>): Promise<any> {
+    return this.shortUrlService.update(params.url_hash);
   }
 
   @Delete('links/:url_hash')
-  @UseGuards(AuthGuard)
-  async deleteShortenedURL(@Param() params: Readonly<GetURLRecordDTO>): Promise<string> {
-    return this.appService.deleteShortenedURLService(params.url_hash);
+  // @UseGuards(AuthGuard)
+  @UseInterceptors(LoggingInterceptor)
+  @UseInterceptors(AnalyticsInterceptor)
+  async deleteShortenedURL(@Param() params: Readonly<GetURLRecordDTO>): Promise<any> {
+    return this.shortUrlService.delete(params.url_hash);
   }
 }
