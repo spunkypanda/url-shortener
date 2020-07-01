@@ -67,10 +67,10 @@ export class ShortURLService {
     return this.buildShortUrlRO(shortUrlRecord);
   }
 
-  async findByUrlHash(urlHash: string): Promise<ShortURLEntityDAO>{
+  async findByUrl(url: string): Promise<ShortURLEntityDAO>{
     const qb = await getRepository(ShortURLEntity)
       .createQueryBuilder('short_url')
-      .where('short_url.url_hash = :urlHash AND is_active = true ', { urlHash });
+      .where('short_url.url_hash = :urlHash AND is_active = true ', { url });
 
     const shortUrlRecord = await qb.getOne();
     if (!shortUrlRecord) {
@@ -81,17 +81,30 @@ export class ShortURLService {
     return this.buildShortUrlRO(shortUrlRecord);
   }
 
+  async findByUrlHash(urlHash: string): Promise<ShortURLEntityDAO>{
+    const qb = await getRepository(ShortURLEntity)
+      .createQueryBuilder('short_url')
+      .where('short_url.url_hash = :urlHash AND is_active = true ', { urlHash });
+
+    const shortUrlRecord = await qb.getOne();
+    if (!shortUrlRecord) {
+      const _errors = { message: 'Url does not exist.' };
+      throw new HttpException(_errors, HttpStatus.NOT_FOUND);
+    };
+
+    return this.buildShortUrlRO(shortUrlRecord);
+  }
+
   async create(dto: Partial<CreateShortUrlDTO>): Promise<ShortURLEntityDAO> {
-    // const qb = await getRepository(ShortURLEntity)
-    //   .createQueryBuilder('short_url')
-    //   .where('short_url.url = :url AND is_active = true ', dto);
+    const qb = await getRepository(ShortURLEntity)
+      .createQueryBuilder('short_url')
+      .where('short_url.url = :url AND is_active = true ', dto);
 
-    // const pipeline = await qb.getOne();
+    const shortURLRecord = await qb.getOne();
 
-    // if (pipeline) {
-    //   const errors = {pipeline_id: 'Id must be unique.'};
-    //   throw new HttpException({message: 'Input data validation failed', errors}, HttpStatus.BAD_REQUEST);
-    // }
+    if (shortURLRecord) {
+      return shortURLRecord;
+    }
 
     const urlHash = getURLHash(RETRY_COUNT);
     const shortUrl =  getShortURL(urlHash);
@@ -137,8 +150,14 @@ export class ShortURLService {
 
 
   async delete(urlHash: string): Promise<DeleteURLRecordDAO> {
-    const toUpdate = await this.findByUrlHash(urlHash);
-    const updated = Object.assign(toUpdate, {is_active: false});
+    const existingUrlRecord = await this.findByUrlHash(urlHash);
+
+    if (!existingUrlRecord) {
+      const _errors = { message: 'Url does not exist.' };
+      throw new HttpException(_errors, HttpStatus.NOT_FOUND);
+    }
+
+    const updated = Object.assign(existingUrlRecord, {is_active: false});
     const res = await this.shortUrlRepository.save(updated);
     return ({
       message: 'success',

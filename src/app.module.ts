@@ -10,6 +10,7 @@ import { ShortUrlModule } from './short-url/short-url.module';
 import { ShortURLController } from './short-url/short-url.controller';
 
 import { DB } from './config'
+import { RequestLogModule } from './request-log/request-log.module';
 
 const typeOrmImport = TypeOrmModule.forRoot(DB)
 
@@ -19,6 +20,7 @@ const typeOrmImport = TypeOrmModule.forRoot(DB)
     typeOrmImport, 
     AuthModule,
     ShortUrlModule,
+    RequestLogModule,
   ],
   controllers: [ShortURLController],
   providers: [AppService],
