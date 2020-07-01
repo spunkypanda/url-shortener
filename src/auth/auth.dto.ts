@@ -8,6 +8,14 @@ export class loginDto {
   readonly password: string;
 }
 
+export class authDto {
+  @IsNotEmpty()
+  readonly host: string;
+
+  @IsNotEmpty()
+  readonly secret: string;
+}
+
 export class registerDto {
   @IsNotEmpty()
   readonly name: string;
@@ -20,7 +28,4 @@ export class registerDto {
 
   @IsNotEmpty()
   readonly host: string;
-
-  @IsNotEmpty()
-  readonly secret: string;
 }
