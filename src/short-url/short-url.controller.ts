@@ -1,13 +1,11 @@
-import { Controller, UseGuards, UseInterceptors, Body, Get, Param, Post, Delete, Put } from '@nestjs/common';
-import { ExecutionContext, Injectable, CanActivate, CallHandler, NestInterceptor, NestMiddleware } from '@nestjs/common';
+import { Controller, UseGuards, CanActivate, Response, Body, Get, Param, ParamData, Post, Delete, Put } from '@nestjs/common';
+import { ExecutionContext, Injectable, CallHandler, NestInterceptor, NestMiddleware, UseInterceptors } from '@nestjs/common';
+import { Response as ResponseBody } from 'express';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+// import { AuthGuard } from '@nestjs/passport';
 
 import { ShortURLService } from './short-url.service';
 import { ShortenedURLDAO, CreateURLRecordDTO, UpdateURLRecordDTO, GetURLRecordDTO } from './short-url.interface';
-
-import {
-  ApiTags,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -18,6 +16,13 @@ export class AuthGuard implements CanActivate {
     if (!authorizationHeader) {
       return false;
     }
+
+    const authString = authorizationHeader.split('Bearer ')[1];
+    const [authStringHost, authStringSecret] = authString.split(':');
+
+    console.log('authStringHost:', authStringHost);
+    console.log('authStringSecret:', authStringSecret);
+
     return true;
   }
 }
@@ -28,9 +33,6 @@ export class LoggingInterceptor implements NestInterceptor {
     return next.handle();
   }
 }
-
-// Store user-agent, http headers, time, ip, referrer of short link visitor for analytical
-// purposes and any other data you identify as required.
 
 @Injectable()
 export class AnalyticsInterceptor implements NestInterceptor {
@@ -95,6 +97,10 @@ export class AnalyticsMiddleware implements NestMiddleware {
   }
 }
 
+
+// @Injectable()
+// export class LocalAuthGuard extends AuthGuard('local') {}
+
 @ApiBearerAuth()
 @ApiTags('short_url')
 @Controller()
@@ -109,7 +115,8 @@ export class ShortURLController {
   }
 
   @Post('links')
-  // @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard)
+  // @UseGuards(AuthGuard('local'))
   @UseInterceptors(LoggingInterceptor)
   @UseInterceptors(AnalyticsInterceptor)
   async createShortenedURL(@Body() body: Readonly<CreateURLRecordDTO>): Promise<Partial<ShortenedURLDAO>> {
@@ -120,10 +127,16 @@ export class ShortURLController {
   }
 
   @Get('links/:url_hash')
+  // @Redirect('https://docs.nestjs.com', 302)
   @UseInterceptors(LoggingInterceptor)
   @UseInterceptors(AnalyticsInterceptor)
-  async getShortenedURL(@Param() params: Readonly<GetURLRecordDTO>): Promise<any> {
-    return this.shortUrlService.findByUrlHash(params.url_hash);
+  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+  async getShortenedURL(
+    @Param() params: Readonly<GetURLRecordDTO>,
+    @Response() res: ResponseBody,
+  ): Promise<any> {
+    const resp = await this.shortUrlService.findByUrlHash(params.url_hash);
+    return res.redirect(resp.url)
   }
 
   @Put('links/:url_hash')

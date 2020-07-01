@@ -7,7 +7,7 @@ import { generate as generateShortID } from 'shortid';
 
 import { ShortURLEntity, ShortURLEntityDAO } from './short-url.entity';
 import { UpdateURLRecordDAO, DeleteURLRecordDAO } from './short-url.interface';
-import { CreateShortUrlDTO, UpdateShortUrlDTO } from './short-url.dto';
+import { CreateShortUrlDTO } from './short-url.dto';
 
 const RETRY_COUNT = 3;
 const whitelabelHost = "www.chinmay.com";
@@ -18,6 +18,7 @@ const getShortURL = (urlHash: string): string => {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const isDuplicateUrl = (urlHash: string ): boolean => {
+// const isDuplicateUrl = async (urlHash: string ): Promise<boolean> => {
   return false
 }
 
@@ -116,18 +117,6 @@ export class ShortURLService {
 
     const savedPipeline = await this.shortUrlRepository.save(newShortUrlRecord);
     return this.buildShortUrlRO(savedPipeline);
-
-    /*
-    const errors = await validate(newShortUrlRecord);
-    if (errors.length > 0) {
-      const _errors = { ShortUrlRecord_id: 'User input is not valid.' };
-      throw new HttpException({message: 'Input data validation failed', _errors}, HttpStatus.BAD_REQUEST);
-
-    } else {
-      const savedPipeline = await this.shortUrlRepository.save(newShortUrlRecord);
-      return this.buildShortUrlRO(savedPipeline);
-    }
-    */
   }
 
   async update(urlHash: string): Promise<UpdateURLRecordDAO> {
