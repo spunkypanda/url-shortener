@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, getRepository } from 'typeorm'
 import { HttpException } from '@nestjs/common/exceptions/http.exception';
 import { HttpStatus } from '@nestjs/common';
+import { ClientOptions, ClientProxy, ClientProxyFactory, Transport } from '@nestjs/microservices';
 import { generate as generateShortID } from 'shortid';
 
 import { ShortURLEntity, ShortURLEntityDAO } from './short-url.entity';
@@ -11,14 +12,23 @@ import { CreateShortUrlDTO } from './short-url.dto';
 
 @Injectable()
 export class ShortURLService {
-
+  private clientProxy: ClientProxy
   private maxRetryCount: number = 3; 
   private whitelabelHost: string = "www.chinmay.com";
 
   constructor(
     @InjectRepository(ShortURLEntity)
     private readonly shortUrlRepository: Repository<ShortURLEntity>,
-  ) {}
+  ) {
+    const microserviceOptions: ClientOptions = {
+      transport: Transport.TCP,
+      options: {
+        host: process.env.URL_SERVICE_HOST,
+        port: parseInt(process.env.URL_SERVICE_PORT),
+      }
+    };
+    this.clientProxy = ClientProxyFactory.create(microserviceOptions);
+  }
 
   private getShortURL = (host: string, urlHash: string): string => {
     return `http://${host}/${urlHash}`;
@@ -37,8 +47,8 @@ export class ShortURLService {
     return generateShortID()
   };
 
-  async ping(): Promise<string> {
-    return 'Pong!';
+  async ping(){
+    return this.clientProxy.send<number, string>('ping', 'chinmay')
   }
 
   private buildShortUrlRO(shortURLRecord: ShortURLEntity) {
@@ -57,90 +67,20 @@ export class ShortURLService {
     return await this.shortUrlRepository.find();
   }
 
-  async findById(shortUrlId: number): Promise<ShortURLEntityDAO>{
-    const shortUrlRecord = await this.shortUrlRepository.findOne(shortUrlId);
-    
-    if (!shortUrlRecord) return null;
-
-    return this.buildShortUrlRO(shortUrlRecord);
+  async findByUrlHash(urlHash: string) {
+    return this.clientProxy.send<ShortURLEntity, string>('links:get', urlHash);
   }
 
-  async findByUrl(url: string): Promise<ShortURLEntityDAO>{
-    const qb = await getRepository(ShortURLEntity)
-      .createQueryBuilder('short_url')
-      .where('short_url.url = :url AND is_active = true ', { url });
-
-    const shortUrlRecord = await qb.getOne();
-    if (!shortUrlRecord) return null;
-
-    return this.buildShortUrlRO(shortUrlRecord);
+  async create(url: string) {
+    return this.clientProxy.send<ShortURLEntityDAO, string>('links:create', url);
   }
 
-  async findByUrlHash(urlHash: string): Promise<ShortURLEntityDAO>{
-    const qb = await getRepository(ShortURLEntity)
-      .createQueryBuilder('short_url')
-      .where('short_url.url_hash = :urlHash AND is_active = true ', { urlHash });
-
-    const shortUrlRecord = await qb.getOne();
-    if (!shortUrlRecord) return null;
-
-    return this.buildShortUrlRO(shortUrlRecord);
+  async update(urlHash: string) {
+    return this.clientProxy.send<UpdateURLRecordDAO, string>('links:update', urlHash);
   }
 
-  async create(dto: Partial<CreateShortUrlDTO>): Promise<ShortURLEntityDAO> {
-    const qb = await getRepository(ShortURLEntity)
-      .createQueryBuilder('short_url')
-      .where('short_url.url = :url AND is_active = true ', dto);
-
-    const shortURLRecord = await qb.getOne();
-    if (shortURLRecord) {
-      return shortURLRecord;
-    }
-
-    const urlHash = this.getURLHash(this.maxRetryCount);
-    const shortUrl =  this.getShortURL(this.whitelabelHost, urlHash);
-
-    const newShortUrlRecord = new ShortURLEntity();
-    newShortUrlRecord.url = dto.url;
-    newShortUrlRecord.url_hash = urlHash;
-    newShortUrlRecord.shortened_url = shortUrl;
-
-    const savedPipeline = await this.shortUrlRepository.save(newShortUrlRecord);
-    return this.buildShortUrlRO(savedPipeline);
-  }
-
-  async update(urlHash: string): Promise<UpdateURLRecordDAO> {
-    const toUpdate = await this.findByUrlHash(urlHash);
-    if (!toUpdate) return null;
-
-    const newURLHash = this.getURLHash(this.maxRetryCount);
-    const shortUrl =  this.getShortURL(this.whitelabelHost, newURLHash);
-    const updateDTO = {
-      url_hash: newURLHash,
-      shortened_url: shortUrl,
-    };
-
-    const updated = Object.assign(toUpdate, updateDTO);
-    const res = await this.shortUrlRepository.save(updated);
-    return ({
-      message: 'success',
-      url: res.url,
-      url_hash: newURLHash,
-      shortened_url: res.shortened_url,
-    });
-  }
-
-  async delete(urlHash: string): Promise<DeleteURLRecordDAO> {
-    const existingUrlRecord = await this.findByUrlHash(urlHash);
-    if (!existingUrlRecord) {
-      return null;
-    }
-    const updated = Object.assign(existingUrlRecord, {is_active: false});
-    const res = await this.shortUrlRepository.save(updated);
-    return ({
-      message: 'success',
-      url: res.url,
-      shortened_url: res.shortened_url,
-    });
+  async delete(urlHash: string) {
+    console.log('urlHash:', urlHash);
+    return this.clientProxy.send<DeleteURLRecordDAO, string>('links:delete', urlHash);
   }
 }
