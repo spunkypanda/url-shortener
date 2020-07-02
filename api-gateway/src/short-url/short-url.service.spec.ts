@@ -14,7 +14,6 @@ describe.only('ShortURLService', () => {
   const invalidUrl: string = 'randomrandom';
   const invalidUrlHash: string = 'randomrandom';
 
-
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -47,7 +46,7 @@ describe.only('ShortURLService', () => {
 
   describe('getShortURL', () => {
     it('should return a ping', async () => {
-      const response = await service.getHello()
+      const response = await service.ping()
       expect(response).toBe('Pong!')
     });
   });

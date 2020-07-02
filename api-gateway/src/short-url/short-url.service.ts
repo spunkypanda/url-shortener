@@ -37,7 +37,7 @@ export class ShortURLService {
     return generateShortID()
   };
 
-  async getHello(): Promise<string> {
+  async ping(): Promise<string> {
     return 'Pong!';
   }
 
@@ -93,7 +93,6 @@ export class ShortURLService {
       .where('short_url.url = :url AND is_active = true ', dto);
 
     const shortURLRecord = await qb.getOne();
-
     if (shortURLRecord) {
       return shortURLRecord;
     }
@@ -112,6 +111,8 @@ export class ShortURLService {
 
   async update(urlHash: string): Promise<UpdateURLRecordDAO> {
     const toUpdate = await this.findByUrlHash(urlHash);
+    if (!toUpdate) return null;
+
     const newURLHash = this.getURLHash(this.maxRetryCount);
     const shortUrl =  this.getShortURL(this.whitelabelHost, newURLHash);
     const updateDTO = {
@@ -129,15 +130,11 @@ export class ShortURLService {
     });
   }
 
-
   async delete(urlHash: string): Promise<DeleteURLRecordDAO> {
     const existingUrlRecord = await this.findByUrlHash(urlHash);
-
     if (!existingUrlRecord) {
-      const _errors = { message: 'Url does not exist.' };
-      throw new HttpException(_errors, HttpStatus.NOT_FOUND);
+      return null;
     }
-
     const updated = Object.assign(existingUrlRecord, {is_active: false});
     const res = await this.shortUrlRepository.save(updated);
     return ({
