@@ -124,6 +124,7 @@ export class ShortURLService {
     return ({
       message: 'success',
       url: res.url,
+      url_hash: newURLHash,
       shortened_url: res.shortened_url,
     });
   }

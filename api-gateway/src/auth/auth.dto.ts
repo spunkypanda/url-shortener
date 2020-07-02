@@ -18,14 +18,14 @@ export class authDto {
 
 export class registerDto {
   @IsNotEmpty()
-  readonly name: string;
+  name: string;
 
   @IsNotEmpty()
-  readonly email: string;
+  email: string;
 
   @IsNotEmpty()
-  readonly password: string;
+  password: string;
 
   @IsNotEmpty()
-  readonly host: string;
+  host: string;
 }

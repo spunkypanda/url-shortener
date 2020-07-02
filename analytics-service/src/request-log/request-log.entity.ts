@@ -14,22 +14,22 @@ export class RequestEntity {
   @Column()
   url: string; 
 
-  @Column("json")
+  @Column({ type: "json", default: {} })
   headers: Record<string, unknown>; 
 
-  @Column("json")
+  @Column({ type: "json", default: {} })
   body: Record<string, unknown>;
   
-  @Column("json")
+  @Column({ type: "json", default: {} })
   query: Record<string, unknown>;
   
-  @Column("json")
+  @Column({ type: "json", default: {} })
   response: Record<string, unknown>; 
 
   @Column()
   status_code: number;  
 
-  @Column("timestamp without time zone")
+  @Column({ type: "timestamp without time zone", default: new Date() })
   timestamp: Date;  
 }
 

@@ -19,7 +19,7 @@ export class AuthService {
     private readonly userRepository: Repository<UserEntity>,
   ) {}
 
-  buildUserRO(user: UserEntity): userDAO {
+  private buildUserRO(user: UserEntity): userDAO {
     return ({
       user_id: user.user_id,
       name: user.name,
@@ -27,6 +27,10 @@ export class AuthService {
       host: user.host,
       secret: user.secret,
     })
+  }
+
+  async generateUserSecret (): Promise<string> {
+    return 'secretsecretsecret';
   }
 
   async findUserByEmailPassword(dto: loginDto): Promise<userDAO> {

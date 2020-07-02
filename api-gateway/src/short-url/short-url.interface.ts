@@ -19,6 +19,7 @@ export interface DeleteURLRecordDAO {
 export interface UpdateURLRecordDAO {
   message: string,
   url: string,
+  url_hash: string,
   shortened_url: string,
 }
 

@@ -1,16 +1,19 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ShortURLService } from './short-url.service';
-import { Repository, createConnection, getConnection, getRepository } from 'typeorm';
+import { Repository, createConnection, getConnection, getRepository, DeleteResult } from 'typeorm';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ShortURLEntity } from './short-url.entity';
 
 describe.only('ShortURLService', () => {
   let service: ShortURLService;
+  const testConnectionName = 'default';
+
   let validUrlId: number;
   let validUrl: string;
   let validUrlHash: string;
   const invalidUrl: string = 'randomrandom';
   const invalidUrlHash: string = 'randomrandom';
+
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -22,7 +25,6 @@ describe.only('ShortURLService', () => {
         }
       ],
     }).compile();
-    const testConnectionName = 'default';
 
     let connection = await createConnection({
       type: "postgres",
@@ -114,6 +116,30 @@ describe.only('ShortURLService', () => {
       const response = await service.findByUrl(invalidUrl)
       expect(response).toBeNull();
     });
+  });
+
+  describe('update', () => {
+    it('should return a valid response', async () => {
+      const response = await service.update(validUrlHash)
+      expect(response).toBeDefined()
+      expect(response.message).toBe('success');
+      expect(typeof response.url).toBe('string');
+      expect(typeof response.shortened_url).toBe('string');
+      expect(typeof response.url_hash).toBe('string');
+      validUrlHash = response.url_hash
+    });
+  });
+
+  describe('delete', () => {
+    it('should return a valid response', async () => {
+      const response = await service.delete(validUrlHash)
+      // expect(response).toBeInstanceOf(DeleteResult)
+      expect(response.message).toBe('success')
+    });
+  });
+
+  afterAll(async () => {
+    await getConnection(testConnectionName).close()
   });
 
 
