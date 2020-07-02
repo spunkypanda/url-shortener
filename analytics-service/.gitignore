@@ -1,12 +1,6 @@
 # compiled output
-api-gateway/dist
-api-gateway/node_modules
-
-analytics-service/dist
-analytics-service/node_modules
-
-url-service/dist
-url-service/node_modules
+/dist
+/node_modules
 
 # Logs
 logs
@@ -20,14 +14,8 @@ lerna-debug.log*
 .DS_Store
 
 # Tests
-api-gateway/coverage
-api-gateway/.nyc_output
-
-analytics-service/coverage
-analytics-service/.nyc_output
-
-url-service/coverage
-url-service/.nyc_output
+/coverage
+/.nyc_output
 
 # IDEs and editors
 /.idea
