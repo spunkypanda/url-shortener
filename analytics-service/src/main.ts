@@ -9,16 +9,18 @@ const logger = new Logger('Analytics');
 const microserviceOptions = {
   transport: Transport.TCP,
   options: {
-    host: '127.0.0.1',
-    port: 4000,
+    host: process.env.ANALYTICS_SERVICE_HOST,
+    port: parseInt(process.env.ANALYTICS_SERVICE_PORT),
   }
 };
 
 async function bootstrap() {
+  console.log("##", process.env.ANALYTICS_SERVICE_HOST);
+  console.log("##", parseInt(process.env.ANALYTICS_SERVICE_PORT));
 
   const app = await NestFactory.createMicroservice(AppModule, microserviceOptions);
   await app.listen(() => {
-    logger.log("Microservice is listening")
+    logger.log("Analytics Service is listening...")
   });
 }
 bootstrap();
