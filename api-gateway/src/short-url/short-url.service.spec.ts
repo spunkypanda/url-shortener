@@ -1,10 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigModule } from '@nestjs/config';
 import { Repository, createConnection, getConnection, getRepository, DeleteResult } from 'typeorm';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import * as uuid from 'uuid';
 
 import { ShortURLService } from './short-url.service';
-import { ShortURLEntity } from './short-url.entity';
+import { ShortURLEntity } from './entities/short-url.entity';
 import { response } from 'express';
 
 describe.only('ShortURLService', () => {
@@ -17,7 +18,13 @@ describe.only('ShortURLService', () => {
   let validUrlHash: string;
 
   beforeAll(async () => {
+
+    process.env
+
     const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        ConfigModule.forRoot(),
+      ],
       providers: [
         ShortURLService,
         {

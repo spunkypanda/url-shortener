@@ -1,16 +1,13 @@
 import { Controller, Logger, BadRequestException, Catch, RpcExceptionFilter, ArgumentsHost, UseFilters } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-import { HttpException } from '@nestjs/common/exceptions/http.exception';
-import { HttpStatus } from '@nestjs/common';
 import { MessagePattern, RpcException } from '@nestjs/microservices';
 import { Observable, throwError } from 'rxjs';
-
-import { ShortURLService } from './short-url.service';
-import { ShortenedURLDAO } from './short-url.interface';
-import { CreateShortUrlDTO, UpdateShortUrlDTO, DeleteShortUrlDTO } from './short-url.dto';
-import { validateOrReject, validate, ValidationOptions, ValidationError, isNotEmpty, IsEmpty } from 'class-validator';
+import { validate } from 'class-validator';
 import { ValidatorOptions } from '@nestjs/common/interfaces/external/validator-options.interface';
 
+import { ShortURLService } from './short-url.service';
+import { ShortenedURLDao } from './short-url.interface';
+import { CreateShortUrlDto, UpdateShortUrlDto, DeleteShortUrlDto } from './dto';
 
 @Catch(RpcException)
 export class ExceptionFilter implements RpcExceptionFilter<RpcException> {
@@ -40,9 +37,9 @@ export class ShortURLController {
 
   @UseFilters(ExceptionFilter)
   @MessagePattern('links:create')
-  async createShortenedURL(createShortUrlDTO: CreateShortUrlDTO): Promise<Partial<ShortenedURLDAO>> {
-    this.logger.log(`url: ${createShortUrlDTO.url}`);
-    const dto = new CreateShortUrlDTO(createShortUrlDTO)
+  async createShortenedURL(createShortUrlDto: CreateShortUrlDto): Promise<Partial<ShortenedURLDao>> {
+    this.logger.log(`url: ${createShortUrlDto.url}`);
+    const dto = new CreateShortUrlDto(createShortUrlDto)
 
     const validatorOptions: ValidatorOptions = {
       skipMissingProperties: false,
@@ -54,7 +51,7 @@ export class ShortURLController {
       const [error] = errors;
       throw new RpcException(error.constraints.isNotEmpty);
     }
-    const resp = await this.shortUrlService.create(createShortUrlDTO);
+    const resp = await this.shortUrlService.create(createShortUrlDto);
     return resp
   }
 
@@ -67,8 +64,8 @@ export class ShortURLController {
 
   @UseFilters(ExceptionFilter)
   @MessagePattern('links:update')
-  async updateShortenedURL(updateShortUrlDTO: UpdateShortUrlDTO): Promise<any> {
-    const dto = new UpdateShortUrlDTO(updateShortUrlDTO)
+  async updateShortenedURL(updateShortUrlDto: UpdateShortUrlDto): Promise<any> {
+    const dto = new UpdateShortUrlDto(updateShortUrlDto)
 
     const validatorOptions: ValidatorOptions = {
       skipMissingProperties: false,
@@ -80,15 +77,15 @@ export class ShortURLController {
       const [error] = errors;
       throw new RpcException(error.constraints.isNotEmpty);
     }
-    const updatedRecord = await this.shortUrlService.update(updateShortUrlDTO);
+    const updatedRecord = await this.shortUrlService.update(updateShortUrlDto);
     if (!updatedRecord) throw this.urlDoesntExistException;
     return updatedRecord;
   }
 
   @UseFilters(ExceptionFilter)
   @MessagePattern('links:delete')
-  async deleteShortenedURL(deleteShortUrlDTO: DeleteShortUrlDTO): Promise<any> {
-    const dto = new DeleteShortUrlDTO(deleteShortUrlDTO)
+  async deleteShortenedURL(deleteShortUrlDto: DeleteShortUrlDto): Promise<any> {
+    const dto = new DeleteShortUrlDto(deleteShortUrlDto)
 
     const validatorOptions: ValidatorOptions = {
       skipMissingProperties: false,
@@ -100,7 +97,7 @@ export class ShortURLController {
       const [error] = errors;
       throw new RpcException(error.constraints.isNotEmpty);
     }
-    const deletedRecord = await this.shortUrlService.delete(deleteShortUrlDTO);
+    const deletedRecord = await this.shortUrlService.delete(deleteShortUrlDto);
     console.log("###", deletedRecord);
     if (!deletedRecord) throw this.urlDoesntExistException;
     return deletedRecord;

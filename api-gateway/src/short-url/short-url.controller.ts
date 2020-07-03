@@ -7,7 +7,7 @@ import { HttpException } from '@nestjs/common/exceptions/http.exception';
 import { HttpStatus } from '@nestjs/common';
 
 import { ShortURLService } from './short-url.service';
-import { CreateURLRecordDTO, UpdateURLRecordDTO, GetURLRecordDTO } from './short-url.interface';
+import { CreateURLRecordDto, UpdateURLRecordDto, GetURLRecordDto } from './short-url.interface';
 import { CreateRequestDto } from './short-url.dto';
 import { AuthGuard } from 'src/app.controller';
 import { ClientOptions, Transport, ClientProxyFactory, ClientProxy } from '@nestjs/microservices';
@@ -92,7 +92,7 @@ export class ShortURLController {
     @Req() req: RequestBody,
     @Response() res: ResponseBody,
     @Headers() header: Record<string, string>,
-    @Body() body: Readonly<CreateURLRecordDTO>
+    @Body() body: Readonly<CreateURLRecordDto>
   ) {
     const correlationId:string = header['X-Correlation-Id'];
     const domain:string = this.defaultWhitelabelHost || header['domain'];
@@ -109,7 +109,7 @@ export class ShortURLController {
   @Get('links/:url_hash')
   @UseFilters(HttpExceptionFilter)
   async getShortenedURL(
-    @Param() params: Readonly<GetURLRecordDTO>,
+    @Param() params: Readonly<GetURLRecordDto>,
     @Req() req: RequestBody,
     @Response() res: ResponseBody,
   ) {
@@ -152,7 +152,7 @@ export class ShortURLController {
     @Req() req: RequestBody,
     @Response() res: ResponseBody,
     @Headers() header: Record<string, string>,
-    @Param() params: Readonly<UpdateURLRecordDTO>
+    @Param() params: Readonly<UpdateURLRecordDto>
   ): Promise<any> {
     const correlationId:string = header['X-Correlation-Id'];
     const domain:string = this.defaultWhitelabelHost || header['domain'];
@@ -174,7 +174,7 @@ export class ShortURLController {
     @Req() req: RequestBody,
     @Response() res: ResponseBody,
     @Headers() header: Record<string, string>,
-    @Param() params: Readonly<GetURLRecordDTO>
+    @Param() params: Readonly<GetURLRecordDto>
   ): Promise<any> {
     const correlationId:string = header['X-Correlation-Id'];
     // const domain:string = header['domain'];

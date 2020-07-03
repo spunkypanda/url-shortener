@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { generate as generateShortID } from 'shortid';
 
-import { ShortenedURLDAO } from './short-url/url.interface';
+import { ShortenedURLDao } from './short-url/url.interface';
 
 const RETRY_COUNT = 3;
 const whitelabelHost = "www.chinmay.com";
@@ -28,35 +28,35 @@ export class AppService {
     return 'Pong!';
   }
 
-  async createShortenedURLService(url: string): Promise<ShortenedURLDAO> {
+  async createShortenedURLService(url: string): Promise<ShortenedURLDao> {
     const urlHash = getURLHash(3, true);
 
     if (urlHash === null) {
       return 
     }
 
-    const shortenedURLDAO = {
+    const shortenedURLDao = {
       url,
       "urlHash" : urlHash ,
       "shortUrl" : getShortURL(urlHash),
     };
 
-    return shortenedURLDAO;
+    return shortenedURLDao;
   }
 
   async getShortenedURLService(urlHash: string): Promise<string> {
     return `Get shortened URL service! - ${urlHash}`;
   }
 
-  async updateShortenedURLService(url: string): Promise<ShortenedURLDAO> {
+  async updateShortenedURLService(url: string): Promise<ShortenedURLDao> {
     const urlHash = getURLHash(RETRY_COUNT);
-    const shortenedURLDAO = {
+    const shortenedURLDao = {
       url,
       "urlHash" : urlHash ,
       "shortUrl" : getShortURL(urlHash),
     };
 
-    return shortenedURLDAO;
+    return shortenedURLDao;
   }
 
   async deleteShortenedURLService(urlHash: string): Promise<string> {

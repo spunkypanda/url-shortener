@@ -4,7 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { TracingMiddleware } from '../middlewares/tracing.middleware';
 import { AuthMiddleware } from '../middlewares/auth.middleware';
 import { ShortURLService } from './short-url.service';
-import { ShortURLEntity } from './short-url.entity';
+import { ShortURLEntity } from './entities/short-url.entity';
 import { ShortURLController } from './short-url.controller';
 import { AuthService } from 'src/auth/auth.service';
 import { UserEntity } from 'src/auth/auth.entity';

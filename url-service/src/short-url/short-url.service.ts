@@ -1,14 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, getRepository } from 'typeorm'
-import { HttpException } from '@nestjs/common/exceptions/http.exception';
-import { HttpStatus } from '@nestjs/common';
 import { generate as generateShortID } from 'shortid';
-import { validate } from 'class-validator';
 
-import { ShortURLEntity, ShortURLEntityDAO } from './short-url.entity';
-import { UpdateURLRecordDAO, DeleteURLRecordDAO } from './short-url.interface';
-import { CreateShortUrlDTO, UpdateShortUrlDTO, DeleteShortUrlDTO } from './short-url.dto';
+import { ShortURLEntity, ShortURLEntityDao } from './entities';
+import { UpdateURLRecordDao, DeleteURLRecordDao } from './short-url.interface';
+import { CreateShortUrlDto, UpdateShortUrlDto, DeleteShortUrlDto } from './dto';
 
 @Injectable()
 export class ShortURLService {
@@ -63,7 +60,7 @@ export class ShortURLService {
     return await this.shortUrlRepository.find({ is_active: true });
   }
 
-  async findById(shortUrlId: number): Promise<ShortURLEntityDAO>{
+  async findById(shortUrlId: number): Promise<ShortURLEntityDao>{
     const shortUrlRecord = await this.shortUrlRepository.findOne(shortUrlId);
     
     if (!shortUrlRecord) return null;
@@ -71,7 +68,7 @@ export class ShortURLService {
     return this.buildShortUrlRO(shortUrlRecord);
   }
 
-  async findByUrl(url: string): Promise<ShortURLEntityDAO>{
+  async findByUrl(url: string): Promise<ShortURLEntityDao>{
     const qb = await getRepository(ShortURLEntity)
       .createQueryBuilder('short_url')
       .where('short_url.url = :url AND is_active = true ', { url });
@@ -82,7 +79,7 @@ export class ShortURLService {
     return this.buildShortUrlRO(shortUrlRecord);
   }
 
-  async findByUrlHash(urlHash: string): Promise<ShortURLEntityDAO>{
+  async findByUrlHash(urlHash: string): Promise<ShortURLEntityDao>{
     const qb = await getRepository(ShortURLEntity)
       .createQueryBuilder('short_url')
       .where('short_url.url_hash = :urlHash AND is_active = true ', { urlHash });
@@ -93,7 +90,7 @@ export class ShortURLService {
     return this.buildShortUrlRO(shortUrlRecord);
   }
 
-  async create(dto: CreateShortUrlDTO): Promise<ShortURLEntityDAO> {
+  async create(dto: CreateShortUrlDto): Promise<ShortURLEntityDao> {
     const shortURLRecord = await this.shortUrlRepository.findOne({ is_active: true, url: dto.url });
     if (shortURLRecord) {
       return shortURLRecord;
@@ -111,18 +108,18 @@ export class ShortURLService {
     return this.buildShortUrlRO(savedPipeline);
   }
 
-  async update(updateShortUrlDTO: UpdateShortUrlDTO): Promise<UpdateURLRecordDAO> {
-    const toUpdate = await this.findByUrlHash(updateShortUrlDTO.url_hash);
+  async update(updateShortUrlDto: UpdateShortUrlDto): Promise<UpdateURLRecordDao> {
+    const toUpdate = await this.findByUrlHash(updateShortUrlDto.url_hash);
     if (!toUpdate) return null;
 
     const newURLHash = await this.getURLHash(this.maxRetryCount);
-    const shortUrl =  this.getShortURL(updateShortUrlDTO.domain, newURLHash);
-    const updateDTO = {
+    const shortUrl =  this.getShortURL(updateShortUrlDto.domain, newURLHash);
+    const updateDto = {
       url_hash: newURLHash,
       shortened_url: shortUrl,
     };
 
-    const updated = Object.assign(toUpdate, updateDTO);
+    const updated = Object.assign(toUpdate, updateDto);
     const res = await this.shortUrlRepository.save(updated);
     return ({
       message: 'success',
@@ -132,8 +129,8 @@ export class ShortURLService {
     });
   }
 
-  async delete(deleteShortUrlDTO: DeleteShortUrlDTO): Promise<DeleteURLRecordDAO> {
-    const existingUrlRecord = await this.findByUrlHash(deleteShortUrlDTO.url_hash);
+  async delete(deleteShortUrlDto: DeleteShortUrlDto): Promise<DeleteURLRecordDao> {
+    const existingUrlRecord = await this.findByUrlHash(deleteShortUrlDto.url_hash);
     if (!existingUrlRecord) {
       return null;
     }

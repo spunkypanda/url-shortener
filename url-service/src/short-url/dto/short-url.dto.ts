@@ -1,6 +1,6 @@
 import { IsNotEmpty } from 'class-validator';
 
-export class GetShortUrlDTO {
+export class GetShortUrlDto {
   constructor(dto) {
     this.correlation_id = dto.correlation_id;
     this.url = dto.url;
@@ -18,7 +18,7 @@ export class GetShortUrlDTO {
 }
 
 
-export class CreateShortUrlDTO {
+export class CreateShortUrlDto {
   constructor(dto) {
     this.correlation_id = dto.correlation_id;
     this.url = dto.url;
@@ -35,7 +35,7 @@ export class CreateShortUrlDTO {
   domain: string;
 }
 
-export class UpdateShortUrlDTO {
+export class UpdateShortUrlDto {
   constructor(dto) {
     this.correlation_id = dto.correlation_id;
     this.url_hash = dto.url_hash;
@@ -53,7 +53,7 @@ export class UpdateShortUrlDTO {
   readonly domain: string;
 }
 
-export class DeleteShortUrlDTO {
+export class DeleteShortUrlDto {
   constructor(dto) {
     this.correlation_id = dto.correlation_id;
     this.url_hash = dto.url_hash;

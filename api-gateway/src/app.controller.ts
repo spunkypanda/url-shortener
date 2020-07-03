@@ -3,8 +3,8 @@ import { ExecutionContext, Injectable, CanActivate, CallHandler, NestInterceptor
 import { ClientProxy, ClientProxyFactory, ClientOptions, MessagePattern, Transport } from '@nestjs/microservices';
 
 import { AppService } from './app.service';
-import { ShortenedURLDAO } from './short-url/url.interface';
-import { CreateURLRecordDTO, GetURLRecordDTO } from './short-url/url.interface';
+import { ShortenedURLDao } from './short-url/url.interface';
+import { CreateURLRecordDto, GetURLRecordDto } from './short-url/url.interface';
 
 
 @Injectable()
@@ -115,12 +115,12 @@ export class AppController {
   // @UseGuards(AuthGuard)
   @UseInterceptors(LoggingInterceptor)
   @UseInterceptors(AnalyticsInterceptor)
-  async createShortenedURL(@Body() body: Readonly<CreateURLRecordDTO>): Promise<ShortenedURLDAO> {
+  async createShortenedURL(@Body() body: Readonly<CreateURLRecordDto>): Promise<ShortenedURLDao> {
     return this.appService.createShortenedURLService(body.url);
   }
 
   @Get('links/:url_hash')
-  async getShortenedURL(@Param() params: Readonly<GetURLRecordDTO>): Promise<string> {
+  async getShortenedURL(@Param() params: Readonly<GetURLRecordDto>): Promise<string> {
     await this.logEvent()
     return this.appService.getShortenedURLService(params.url_hash);
   }
@@ -128,13 +128,13 @@ export class AppController {
   @Put('links')
   @UseGuards(AuthGuard)
   @UseInterceptors(LoggingInterceptor)
-  async updateShortenedURL(@Body() body: Readonly<CreateURLRecordDTO>): Promise<ShortenedURLDAO> {
+  async updateShortenedURL(@Body() body: Readonly<CreateURLRecordDto>): Promise<ShortenedURLDao> {
     return this.appService.updateShortenedURLService(body.url);
   }
 
   @Delete('links/:url_hash')
   @UseGuards(AuthGuard)
-  async deleteShortenedURL(@Param() params: Readonly<GetURLRecordDTO>): Promise<string> {
+  async deleteShortenedURL(@Param() params: Readonly<GetURLRecordDto>): Promise<string> {
     return this.appService.deleteShortenedURLService(params.url_hash);
   }
 }

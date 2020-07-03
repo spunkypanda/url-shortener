@@ -2,12 +2,11 @@ import { Injectable, HttpException, HttpCode, HttpStatus } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm'
 import { ClientOptions, ClientProxy, ClientProxyFactory, Transport } from '@nestjs/microservices';
-
-import { ShortURLEntity, ShortURLEntityDAO } from './short-url.entity';
-import { UpdateURLRecordDAO, DeleteURLRecordDAO } from './short-url.interface';
-import { CreateShortUrlDTO, UpdateShortUrlDTO, DeleteShortUrlDTO } from './short-url.dto';
-import { domain } from 'process';
 import { validate } from 'class-validator';
+
+import { ShortURLEntity, ShortURLEntityDao } from './entities/short-url.entity';
+import { UpdateURLRecordDao, DeleteURLRecordDao } from './short-url.interface';
+import { CreateShortUrlDto, UpdateShortUrlDto, DeleteShortUrlDto } from './dto';
 
 @Injectable()
 export class ShortURLService {
@@ -40,36 +39,36 @@ export class ShortURLService {
   }
 
   async create(correlationId: string, domain: string, url: string) {
-    const createShortUrlDTO: Partial<CreateShortUrlDTO> = {
+    const createShortUrlDto: Partial<CreateShortUrlDto> = {
       correlation_id: correlationId,
       domain: domain,
       url: url,
     };
 
-    return this.clientProxy.send<ShortURLEntityDAO, Partial<CreateShortUrlDTO>>('links:create', createShortUrlDTO);
+    return this.clientProxy.send<ShortURLEntityDao, Partial<CreateShortUrlDto>>('links:create', createShortUrlDto);
   }
 
   async update(correlationId: string, domain: string, urlHash: string) {
-    const updateShortUrlDTO: UpdateShortUrlDTO = {
+    const updateShortUrlDto: UpdateShortUrlDto = {
       correlation_id: correlationId,
       domain: domain,
       url_hash: urlHash,
     };
 
-    const errors = await validate(updateShortUrlDTO)
+    const errors = await validate(updateShortUrlDto)
     if (errors.length) {
       const [error] = errors;
       throw new HttpException(error.constraints, HttpStatus.BAD_REQUEST);
     }
 
-    return this.clientProxy.send<UpdateURLRecordDAO, UpdateShortUrlDTO>('links:update', updateShortUrlDTO);
+    return this.clientProxy.send<UpdateURLRecordDao, UpdateShortUrlDto>('links:update', updateShortUrlDto);
   }
 
   async delete(correlationId: string, urlHash: string) {
-    const deleteShortUrlDTO: DeleteShortUrlDTO = {
+    const deleteShortUrlDto: DeleteShortUrlDto = {
       correlation_id: correlationId,
       url_hash: urlHash,
     };
-    return this.clientProxy.send<DeleteURLRecordDAO, DeleteShortUrlDTO>('links:delete', deleteShortUrlDTO);
+    return this.clientProxy.send<DeleteURLRecordDao, DeleteShortUrlDto>('links:delete', deleteShortUrlDto);
   }
 }

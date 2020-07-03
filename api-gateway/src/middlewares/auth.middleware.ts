@@ -1,5 +1,5 @@
 import { Logger, Injectable, NestMiddleware } from "@nestjs/common";
-import { ShortURLEntity } from "src/short-url/short-url.entity";
+import { ShortURLEntity } from "src/short-url/entities/short-url.entity";
 import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 import { UserEntity } from "src/auth/auth.entity";

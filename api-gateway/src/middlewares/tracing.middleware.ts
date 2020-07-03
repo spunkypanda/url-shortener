@@ -2,30 +2,8 @@ import { Injectable, Logger, NestMiddleware } from "@nestjs/common";
 import * as uuid from "uuid";
 import { ClientProxy, ClientProxyFactory, ClientOptions, Transport } from "@nestjs/microservices";
 
-interface CreateRequestDto {
-  correlation_id: string; 
-  action: string; 
-  url: string; 
-  headers: Record<string, any>; 
-  body: Record<string, any>;
-  query: Record<string, any>;
-  response?: Record<string, any>; 
-  status_code?: number;  
-  timestamp?: Date;  
-}
-
-interface RequestEntity {
-  request_id: string; 
-  correlation_id: string; 
-  action: string; 
-  url: string; 
-  headers: Record<string, unknown>; 
-  body: Record<string, unknown>;
-  query: Record<string, unknown>;
-  response: Record<string, unknown>; 
-  status_code: number;
-  timestamp: Date;
-}
+import { CreateRequestDto } from '../short-url/short-url.dto';
+import { RequestEntity } from '../short-url/entities';
 
 @Injectable()
 export class TracingMiddleware implements NestMiddleware {

@@ -5,7 +5,7 @@ import { HttpException } from '@nestjs/common/exceptions/http.exception';
 import { HttpStatus } from '@nestjs/common';
 
 import { UserEntity } from './auth.entity';
-import { userDAO } from './auth.interface';
+import { UserDao } from './auth.interface';
 import { loginDto, registerDto, authDto } from './auth.dto';
 
 const generateUserSecret = (): string => {
@@ -19,7 +19,7 @@ export class AuthService {
     private readonly userRepository: Repository<UserEntity>,
   ) {}
 
-  private buildUserRO(user: UserEntity): userDAO {
+  private buildUserRO(user: UserEntity): UserDao {
     return ({
       user_id: user.user_id,
       name: user.name,
@@ -33,7 +33,7 @@ export class AuthService {
     return 'secretsecretsecret';
   }
 
-  async findUserByEmailPassword(dto: loginDto): Promise<userDAO> {
+  async findUserByEmailPassword(dto: loginDto): Promise<UserDao> {
     const qb = await getRepository(UserEntity)
       .createQueryBuilder('users')
       .where('users.email = :email AND users.password = :password AND is_active = true ', dto);
@@ -48,7 +48,7 @@ export class AuthService {
     return this.buildUserRO(userRecord);
   }
 
-  async findUserByHostSecret(dto: authDto): Promise<userDAO> {
+  async findUserByHostSecret(dto: authDto): Promise<UserDao> {
     const qb = await getRepository(UserEntity)
       .createQueryBuilder('users')
       .where('users.host = :host AND users.secret = :secret AND is_active = true ', dto);
@@ -64,7 +64,7 @@ export class AuthService {
   }
 
 
-  async create(dto: registerDto): Promise<userDAO> {
+  async create(dto: registerDto): Promise<UserDao> {
     const qb = await getRepository(UserEntity)
       .createQueryBuilder('users')
       .where('users.email = :email AND is_active = true ', dto);

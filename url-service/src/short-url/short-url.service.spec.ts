@@ -1,12 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { Repository, createConnection, getConnection, getRepository, DeleteResult } from 'typeorm';
+import { Repository, createConnection, getConnection, getRepository } from 'typeorm';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import * as uuid from 'uuid';
 
 import { ShortURLService } from './short-url.service';
-
-import { ShortURLEntity } from './short-url.entity';
-import { domain } from 'process';
+import { ShortURLEntity } from './entities/short-url.entity';
 
 
 describe.only('ShortURLService', () => {

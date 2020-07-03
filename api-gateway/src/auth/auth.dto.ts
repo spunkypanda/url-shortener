@@ -4,28 +4,28 @@ export class loginDto {
   @IsEmail()
   readonly email: string;
 
-  @IsNotEmpty()
+  @IsNotEmpty({ always: true })
   readonly password: string;
 }
 
 export class authDto {
-  @IsNotEmpty()
+  @IsNotEmpty({ always: true })
   readonly host: string;
 
-  @IsNotEmpty()
+  @IsNotEmpty({ always: true })
   readonly secret: string;
 }
 
 export class registerDto {
-  @IsNotEmpty()
+  @IsNotEmpty({ always: true })
   name: string;
 
   @IsEmail()
   email: string;
 
-  @IsNotEmpty()
+  @IsNotEmpty({ always: true })
   password: string;
 
-  @IsNotEmpty()
+  @IsNotEmpty({ always: true })
   host: string;
 }

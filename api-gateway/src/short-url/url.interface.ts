@@ -1,12 +1,12 @@
-export interface CreateURLRecordDTO {
+export interface CreateURLRecordDto {
   url: string,
 }
 
-export interface GetURLRecordDTO {
+export interface GetURLRecordDto {
   url_hash: string,
 }
 
-export interface ShortenedURLDAO {
+export interface ShortenedURLDao {
   url: string,
   urlHash: string ,
   shortUrl: string ,

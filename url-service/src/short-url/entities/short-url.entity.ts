@@ -17,11 +17,6 @@ export class ShortURLEntity extends BaseEntity {
 
   @Column({ default: true })
   is_active: boolean;
-
-  getUrlId(): number {
-    return this.url_id;
-  }
-
 }
 
-export type ShortURLEntityDAO = Partial<ShortURLEntity>
+export type ShortURLEntityDao = Partial<ShortURLEntity>

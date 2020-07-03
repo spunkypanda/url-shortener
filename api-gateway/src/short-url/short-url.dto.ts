@@ -1,23 +1,25 @@
 import { IsNotEmpty } from 'class-validator';
 
-export class CreateShortUrlDTO {
-  @IsNotEmpty()
+export class CreateShortUrlDto {
+  @IsNotEmpty({ always: true })
   readonly url: string;
 
   readonly correlation_id: string;
+
   readonly domain: string;
 }
 
-export class UpdateShortUrlDTO {
-  @IsNotEmpty()
+export class UpdateShortUrlDto {
+  @IsNotEmpty({ always: true })
   readonly url_hash: string;
 
   readonly correlation_id: string;
+
   readonly domain: string;
 }
 
-export class DeleteShortUrlDTO {
-  @IsNotEmpty()
+export class DeleteShortUrlDto {
+  @IsNotEmpty({ always: true })
   readonly url_hash: string;
 
   readonly correlation_id: string;
@@ -31,6 +33,5 @@ export interface CreateRequestDto {
   body: Record<string, any>;
   query: Record<string, any>;
   response?: Record<string, any>; 
-  status_code?: number;  
   timestamp?: Date;  
 }
