@@ -56,9 +56,6 @@ export class AuthMiddleware implements NestMiddleware {
     const method = request.method;
     if (method == 'GET') return next();
 
-    logger.log('Headers');
-    logger.log(headers);
-
     const authorizationHeader = headers['authorization'];
     if (!authorizationHeader) return next();
 
@@ -76,6 +73,7 @@ export class AuthMiddleware implements NestMiddleware {
     if (!userRecord) return next();
 
     request.headers['userId'] = userRecord.user_id;
+    request.headers['domain'] = userRecord.host;
     request.headers['whitelabelHost'] = decodedHostAndSecret.host;
     request.headers['whitelabelSecret'] = decodedHostAndSecret.secret;
     return next();

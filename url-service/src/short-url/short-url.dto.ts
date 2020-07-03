@@ -22,15 +22,3 @@ export class DeleteShortUrlDTO {
 
   readonly correlation_id: string;
 }
-
-export interface CreateRequestDto {
-  correlation_id: string; 
-  action: string; 
-  url: string; 
-  headers: Record<string, any>; 
-  body: Record<string, any>;
-  query: Record<string, any>;
-  response?: Record<string, any>; 
-  status_code?: number;  
-  timestamp?: Date;  
-}

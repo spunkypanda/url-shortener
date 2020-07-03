@@ -25,7 +25,4 @@ export class RequestLogService {
     return this.requestRepository.save(requestRecord);
   }
 
-
-
-
 }

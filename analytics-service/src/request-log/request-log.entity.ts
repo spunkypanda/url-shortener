@@ -14,19 +14,19 @@ export class RequestEntity {
   @Column()
   url: string; 
 
-  @Column({ type: "json", default: {} })
+  @Column({ nullable: true, type: "json", default: {} })
   headers: Record<string, unknown>; 
 
-  @Column({ type: "json", default: {} })
+  @Column({ nullable: true, type: "json", default: {} })
   body: Record<string, unknown>;
   
-  @Column({ type: "json", default: {} })
+  @Column({ nullable: true, type: "json", default: {} })
   query: Record<string, unknown>;
   
-  @Column({ type: "json", default: {} })
+  @Column({ nullable: true, type: "json", default: {} })
   response: Record<string, unknown>; 
 
-  @Column()
+  @Column({ nullable: true })
   status_code: number;  
 
   @Column({ type: "timestamp without time zone", default: new Date() })

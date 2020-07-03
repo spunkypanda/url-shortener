@@ -107,9 +107,8 @@ export class AppController {
   }
 
   async logEvent() {
-    this.clientProxy
-      .send<string, string>('hello', 'chinmay')
-      .subscribe(result => console.log('result', result))
+    return this.clientProxy.send<string, string>('ping', 'chinmay')
+      // .subscribe(result => console.log('result', result))
   }
 
   @Post('links')
@@ -122,6 +121,7 @@ export class AppController {
 
   @Get('links/:url_hash')
   async getShortenedURL(@Param() params: Readonly<GetURLRecordDTO>): Promise<string> {
+    await this.logEvent()
     return this.appService.getShortenedURLService(params.url_hash);
   }
 

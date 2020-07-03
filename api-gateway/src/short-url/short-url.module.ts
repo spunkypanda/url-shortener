@@ -1,7 +1,7 @@
 import { Module, NestModule, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { PassportModule } from '@nestjs/passport';
 
+import { TracingMiddleware } from '../middlewares/tracing.middleware';
 import { AuthMiddleware } from '../middlewares/auth.middleware';
 import { ShortURLService } from './short-url.service';
 import { ShortURLEntity } from './short-url.entity';
@@ -25,9 +25,12 @@ import { UserEntity } from 'src/auth/auth.entity';
 export class ShortUrlModule implements NestModule {
   async configure(consumer: MiddlewareConsumer) {
     consumer
+      .apply(TracingMiddleware)
+      // .forRoutes(ShortURLController)
+      .forRoutes({ path: 'links/*', method: RequestMethod.GET })
       .apply(AuthMiddleware)
       .exclude({ path: 'links/*', method: RequestMethod.GET })
-      .forRoutes(ShortURLController)
+      .forRoutes(ShortURLController);
   }
 
   constructor(private readonly shortUrlService: ShortURLService) {}
