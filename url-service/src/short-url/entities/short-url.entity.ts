@@ -1,18 +1,17 @@
 import { Entity, PrimaryGeneratedColumn, Column, BaseEntity } from "typeorm";
-// import { IsNotEmpty } from 'class-validator';
 
 @Entity('short_url')
 export class ShortURLEntity extends BaseEntity {
   @PrimaryGeneratedColumn()
   url_id: number;
 
-  @Column()
+  @Column({ nullable: false })
   url: string;
 
-  @Column()
+  @Column({ nullable: false })
   url_hash: string;
 
-  @Column()
+  @Column({ nullable: false })
   shortened_url: string;
 
   @Column({ default: true })

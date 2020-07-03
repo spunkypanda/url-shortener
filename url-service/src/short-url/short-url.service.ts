@@ -10,7 +10,7 @@ import { CreateShortUrlDto, UpdateShortUrlDto, DeleteShortUrlDto } from './dto';
 @Injectable()
 export class ShortURLService {
 
-  private maxRetryCount: number = 3; 
+  private maxRetryCount: number = parseInt(process.env.MAX_RETRY_COUNT) || 1; 
 
   constructor(
     @InjectRepository(ShortURLEntity)
@@ -44,7 +44,7 @@ export class ShortURLService {
     return 'Pong!';
   }
 
-  buildShortUrlRO(shortURLRecord: ShortURLEntity) {
+  buildShortUrlRO(shortURLRecord: ShortURLEntity): ShortURLEntityDao {
     const shortUrlRO = {
       url_id: shortURLRecord.url_id,
       url: shortURLRecord.url,
@@ -56,8 +56,9 @@ export class ShortURLService {
     return shortUrlRO;
   }
 
-  async findAll(): Promise<ShortURLEntity[]> {
-    return await this.shortUrlRepository.find({ is_active: true });
+  async findAll(): Promise<ShortURLEntityDao[]> {
+    const records = await this.shortUrlRepository.find({ is_active: true });
+    return records.map(this.buildShortUrlRO);
   }
 
   async findById(shortUrlId: number): Promise<ShortURLEntityDao>{
@@ -69,24 +70,14 @@ export class ShortURLService {
   }
 
   async findByUrl(url: string): Promise<ShortURLEntityDao>{
-    const qb = await getRepository(ShortURLEntity)
-      .createQueryBuilder('short_url')
-      .where('short_url.url = :url AND is_active = true ', { url });
-
-    const shortUrlRecord = await qb.getOne();
+    const shortUrlRecord = await this.shortUrlRepository.findOne({ url, is_active: true });
     if (!shortUrlRecord) return null;
-
     return this.buildShortUrlRO(shortUrlRecord);
   }
 
   async findByUrlHash(urlHash: string): Promise<ShortURLEntityDao>{
-    const qb = await getRepository(ShortURLEntity)
-      .createQueryBuilder('short_url')
-      .where('short_url.url_hash = :urlHash AND is_active = true ', { urlHash });
-
-    const shortUrlRecord = await qb.getOne();
+    const shortUrlRecord = await this.shortUrlRepository.findOne({ url_hash: urlHash, is_active: true });
     if (!shortUrlRecord) return null;
-
     return this.buildShortUrlRO(shortUrlRecord);
   }
 
@@ -119,7 +110,7 @@ export class ShortURLService {
       shortened_url: shortUrl,
     };
 
-    const updated = Object.assign(toUpdate, updateDto);
+    const updated = { ...toUpdate, ...updateDto };
     const res = await this.shortUrlRepository.save(updated);
     return ({
       message: 'success',
@@ -134,7 +125,7 @@ export class ShortURLService {
     if (!existingUrlRecord) {
       return null;
     }
-    const updated = Object.assign(existingUrlRecord, {is_active: false});
+    const updated = { ...existingUrlRecord, is_active: false };
     const res = await this.shortUrlRepository.save(updated);
     return ({
       message: 'success',

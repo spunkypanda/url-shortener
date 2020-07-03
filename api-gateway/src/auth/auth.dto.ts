@@ -5,7 +5,7 @@ export class loginDto {
   readonly email: string;
 
   @IsNotEmpty({ always: true })
-  readonly password: string;
+  password: string;
 }
 
 export class authDto {

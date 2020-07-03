@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, getRepository } from 'typeorm'
 import { HttpException } from '@nestjs/common/exceptions/http.exception';
 import { HttpStatus } from '@nestjs/common';
+import { hashSync, compareSync } from 'bcrypt';
 
 import { UserEntity } from './auth.entity';
 import { UserDao } from './auth.interface';
@@ -14,6 +15,7 @@ const generateUserSecret = (): string => {
 
 @Injectable()
 export class AuthService {
+  private saltRounds: number = 10;
   constructor(
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
@@ -34,14 +36,14 @@ export class AuthService {
   }
 
   async findUserByEmailPassword(dto: loginDto): Promise<UserDao> {
-    const qb = await getRepository(UserEntity)
-      .createQueryBuilder('users')
-      .where('users.email = :email AND users.password = :password AND is_active = true ', dto);
-
-    const userRecord = await qb.getOne();
-
+    const userRecord = await this.userRepository.findOne({ email: dto.email, is_active: true });
     if (!userRecord) {
-      const _errors = { message: "User doesn't exist" };
+      const _errors = { message: "Invalid email/password" };
+      throw new HttpException(_errors, HttpStatus.BAD_REQUEST);
+    }
+
+    if (!compareSync(dto.password, userRecord.password)) {
+      const _errors = { message: "Invalid email/password" };
       throw new HttpException(_errors, HttpStatus.BAD_REQUEST);
     }
 
@@ -49,12 +51,7 @@ export class AuthService {
   }
 
   async findUserByHostSecret(dto: authDto): Promise<UserDao> {
-    const qb = await getRepository(UserEntity)
-      .createQueryBuilder('users')
-      .where('users.host = :host AND users.secret = :secret AND is_active = true ', dto);
-
-    const userRecord = await qb.getOne();
-
+    const userRecord = await this.userRepository.findOne({ ...dto, is_active: true });
     if (!userRecord) {
       const _errors = { message: "User doesn't exist" };
       throw new HttpException(_errors, HttpStatus.BAD_REQUEST);
@@ -65,22 +62,19 @@ export class AuthService {
 
 
   async create(dto: registerDto): Promise<UserDao> {
-    const qb = await getRepository(UserEntity)
-      .createQueryBuilder('users')
-      .where('users.email = :email AND is_active = true ', dto);
-
-    const existingUserRecord = await qb.getOne();
-
+    const existingUserRecord = await this.userRepository.findOne({ is_active: true, email: dto.email });
     if (existingUserRecord) {
       const _errors = { message: 'User email must be unique' };
       throw new HttpException(_errors, HttpStatus.BAD_REQUEST);
     }
 
+    const passwordHash = hashSync(dto.password, this.saltRounds);
+
     const userRecord = new UserEntity();
     userRecord.name = dto.name;
     userRecord.email = dto.email;
     userRecord.host = dto.host;
-    userRecord.password = dto.password;
+    userRecord.password = passwordHash;
     userRecord.secret = generateUserSecret();
 
     const savedPipeline = await this.userRepository.save(userRecord);
