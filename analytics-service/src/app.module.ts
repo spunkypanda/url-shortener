@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { RequestLogService } from './request-log/request-log.service';
 
 import { DB } from './config'
 import { RequestLogModule } from './request-log/request-log.module';
@@ -19,4 +20,9 @@ const typeOrmImport = TypeOrmModule.forRoot(DB)
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule {
+  constructor(
+    private readonly appService: AppService,
+    private readonly requestLogService: RequestLogService
+  ) {}
+}

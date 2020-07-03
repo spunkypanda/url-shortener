@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException, HttpCode, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm'
 import { ClientOptions, ClientProxy, ClientProxyFactory, Transport } from '@nestjs/microservices';
@@ -7,6 +7,7 @@ import { ShortURLEntity, ShortURLEntityDAO } from './short-url.entity';
 import { UpdateURLRecordDAO, DeleteURLRecordDAO } from './short-url.interface';
 import { CreateShortUrlDTO, UpdateShortUrlDTO, DeleteShortUrlDTO } from './short-url.dto';
 import { domain } from 'process';
+import { validate } from 'class-validator';
 
 @Injectable()
 export class ShortURLService {
@@ -39,12 +40,13 @@ export class ShortURLService {
   }
 
   async create(correlationId: string, domain: string, url: string) {
-    const createShortUrlDTO: CreateShortUrlDTO = {
+    const createShortUrlDTO: Partial<CreateShortUrlDTO> = {
       correlation_id: correlationId,
       domain: domain,
       url: url,
     };
-    return this.clientProxy.send<ShortURLEntityDAO, CreateShortUrlDTO>('links:create', createShortUrlDTO);
+
+    return this.clientProxy.send<ShortURLEntityDAO, Partial<CreateShortUrlDTO>>('links:create', createShortUrlDTO);
   }
 
   async update(correlationId: string, domain: string, urlHash: string) {
@@ -53,6 +55,13 @@ export class ShortURLService {
       domain: domain,
       url_hash: urlHash,
     };
+
+    const errors = await validate(updateShortUrlDTO)
+    if (errors.length) {
+      const [error] = errors;
+      throw new HttpException(error.constraints, HttpStatus.BAD_REQUEST);
+    }
+
     return this.clientProxy.send<UpdateURLRecordDAO, UpdateShortUrlDTO>('links:update', updateShortUrlDTO);
   }
 

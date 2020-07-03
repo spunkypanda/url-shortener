@@ -1,6 +1,7 @@
-import { Controller, UseGuards, Response, Body, Get, Param, Post, Delete, Put, Req, Headers  } from '@nestjs/common';
+import { Controller, UseGuards, Response, Body, Get, Param, Post, Delete, Put } from '@nestjs/common';
+import { Req, Headers, UseFilters, Catch, ArgumentsHost, ExceptionFilter } from '@nestjs/common';
 import { ExecutionContext, Injectable, CallHandler, NestInterceptor } from '@nestjs/common';
-import { Response as ResponseBody, Request as RequestBody } from 'express';
+import { Response as ResponseBody, Request as RequestBody, response } from 'express';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { HttpException } from '@nestjs/common/exceptions/http.exception';
 import { HttpStatus } from '@nestjs/common';
@@ -18,6 +19,21 @@ export class LoggingInterceptor implements NestInterceptor {
   }
 }
 
+@Catch(HttpException)
+export class HttpExceptionFilter implements ExceptionFilter {
+  catch(exception: HttpException, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse<ResponseBody>();
+    const status = exception.getStatus();
+    const message = exception.getResponse();
+
+    response
+      .status(status)
+      .json({ message });
+  }
+}
+
+
 @ApiBearerAuth()
 @ApiTags('short_url')
 @Controller()
@@ -29,7 +45,7 @@ export class ShortURLController {
   private linkFailedActionName: string = 'LINK_FAILED';
   private linkFoundActionName: string = 'LINK_FOUND';
 
-  private readonly urlDoesntExistExceptionError: Record<string, any> =  { message: 'Url does not exist.' };
+  private readonly urlDoesntExistExceptionError: string =  'Url does not exist.';
   private readonly urlDoesntExistException: HttpException = new HttpException(this.urlDoesntExistExceptionError, HttpStatus.NOT_FOUND);
 
   constructor(private readonly shortUrlService: ShortURLService) {
@@ -71,6 +87,7 @@ export class ShortURLController {
 
   @Post('links')
   @UseGuards(AuthGuard)
+  @UseFilters(HttpExceptionFilter)
   async createShortenedURL(
     @Req() req: RequestBody,
     @Response() res: ResponseBody,
@@ -80,14 +97,17 @@ export class ShortURLController {
     const correlationId:string = header['X-Correlation-Id'];
     const domain:string = this.defaultWhitelabelHost || header['domain'];
     const result = await this.shortUrlService.create(correlationId, domain, body.url);
-    return result.subscribe(async (response) => {
-      this.logRequest(req, this.linkCreatedActionName, () => {
-        return res.json(response)
-      });
-    });
+
+    try {
+      const response = await result.toPromise();
+      this.logRequest(req, this.linkCreatedActionName, () =>  res.json(response));
+    } catch (error) {
+      throw new HttpException(error, HttpStatus.BAD_REQUEST)
+    }
   }
 
   @Get('links/:url_hash')
+  @UseFilters(HttpExceptionFilter)
   async getShortenedURL(
     @Param() params: Readonly<GetURLRecordDTO>,
     @Req() req: RequestBody,
@@ -95,6 +115,21 @@ export class ShortURLController {
   ) {
     const result = await this.shortUrlService.findByUrlHash(params.url_hash)
 
+    try {
+      const response = await result.toPromise()
+      if (!response) {
+        await this.logRequest(req, this.linkFailedActionName, () => {
+          throw this.urlDoesntExistException;
+        });
+      }
+      return res.redirect(response.url);
+    } catch (error) {
+      console.log("###", error.message)
+      throw this.urlDoesntExistException;
+      // throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
+    }
+
+    /*
     return result.subscribe(async (result) => {
       if (!result) {
         await this.logRequest(req, this.linkFailedActionName, () => {
@@ -107,27 +142,48 @@ export class ShortURLController {
         return res.redirect(result.url)
       });
     });
-
+    */
   }
 
   @Put('links/:url_hash')
   @UseGuards(AuthGuard)
-  async updateShortenedURL(@Headers() header: Record<string, string>, @Param() params: Readonly<UpdateURLRecordDTO>): Promise<any> {
+  @UseFilters(HttpExceptionFilter)
+  async updateShortenedURL(
+    @Req() req: RequestBody,
+    @Response() res: ResponseBody,
+    @Headers() header: Record<string, string>,
+    @Param() params: Readonly<UpdateURLRecordDTO>
+  ): Promise<any> {
     const correlationId:string = header['X-Correlation-Id'];
     const domain:string = this.defaultWhitelabelHost || header['domain'];
-    const updatedRecord = await this.shortUrlService.update(correlationId, domain, params.url_hash);
-    if (!updatedRecord) throw this.urlDoesntExistException;
-    return updatedRecord;
+    const result = await this.shortUrlService.update(correlationId, domain, params.url_hash);
+    try {
+      const response = await result.toPromise();
+      this.logRequest(req, this.linkCreatedActionName, () => res.json(response));
+    } catch (error) {
+      throw new HttpException(error, HttpStatus.BAD_REQUEST)
+    }
+    // if (!updatedRecord) throw this.urlDoesntExistException;
+    // return updatedRecord;
   }
 
   @Delete('links/:url_hash')
   @UseGuards(AuthGuard)
-  async deleteShortenedURL(@Headers() header: Record<string, string>, @Param() params: Readonly<GetURLRecordDTO>): Promise<any> {
+  @UseFilters(HttpExceptionFilter)
+  async deleteShortenedURL(
+    @Req() req: RequestBody,
+    @Response() res: ResponseBody,
+    @Headers() header: Record<string, string>,
+    @Param() params: Readonly<GetURLRecordDTO>
+  ): Promise<any> {
     const correlationId:string = header['X-Correlation-Id'];
     // const domain:string = header['domain'];
-    const deletedRecord = await this.shortUrlService.delete(correlationId, params.url_hash);
-    if (!deletedRecord) throw this.urlDoesntExistException;
-
-    return deletedRecord
+    const result = await this.shortUrlService.delete(correlationId, params.url_hash);
+    try {
+      const response = await result.toPromise();
+      this.logRequest(req, this.linkCreatedActionName, () => res.json(response));
+    } catch (error) {
+      throw new HttpException(error, HttpStatus.BAD_REQUEST)
+    }
   }
 }

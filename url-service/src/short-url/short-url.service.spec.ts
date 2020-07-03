@@ -16,6 +16,7 @@ describe.only('ShortURLService', () => {
   let validUrlId: number;
   let validUrl: string;
   let validUrlHash: string;
+  let validShortenedUrl: string;
 
   const correlationId: string = uuid.v4();
   const domainName: string = "www.bit.ly";
@@ -60,6 +61,25 @@ describe.only('ShortURLService', () => {
     });
   });
 
+  describe('buildShortUrlRO', () => {
+    it('should return a valid response', async () => {
+      const newShortUrlRecord = new ShortURLEntity();
+      newShortUrlRecord.url_id = 21;
+      newShortUrlRecord.url = 'www.google.com';
+      newShortUrlRecord.url_hash = 'ABCDEFG';
+      newShortUrlRecord.shortened_url = 'www.bit.ly/ABCDEFG';
+      newShortUrlRecord.is_active = false;
+
+      const response = await service.buildShortUrlRO(newShortUrlRecord)
+      expect(response).toBeDefined()
+      expect(response.url_id).toBe(newShortUrlRecord.url_id);
+      expect(response.url_hash).toBe(newShortUrlRecord.url_hash);
+      expect(response.url).toBe(newShortUrlRecord.url);
+      expect(response.shortened_url).toBe(newShortUrlRecord.shortened_url);
+      expect(response.is_active).toBe(newShortUrlRecord.is_active);
+    });
+  });
+
   describe('create', () => {
     it('should return a valid response', async () => {
       const createDto = {
@@ -74,9 +94,29 @@ describe.only('ShortURLService', () => {
       expect(typeof response.url_hash).toBe('string');
       expect(typeof response.url_id).toBe('number');
       validUrlHash = response.url_hash;
+      validShortenedUrl = response.shortened_url;
       validUrl = response.url;
       validUrlId = response.url_id;
     });
+
+    it('should return null when given invalid data', async () => {
+      const createDto = {
+        correlation_id: correlationId,
+        domain: domainName,
+        url: 'www.google.com',
+      };
+      const response = await service.create(createDto)
+      expect(response).toBeDefined()
+      expect(typeof response.is_active).toBe('boolean');
+      expect(typeof response.url).toBe('string');
+      expect(typeof response.url_hash).toBe('string');
+      expect(typeof response.url_id).toBe('number');
+      validUrlHash = response.url_hash;
+      validShortenedUrl = response.shortened_url;
+      validUrl = response.url;
+      validUrlId = response.url_id;
+    });
+
   });
 
   describe('findById', () => {
@@ -129,7 +169,7 @@ describe.only('ShortURLService', () => {
   });
 
   describe('update', () => {
-    it('should return a valid response', async () => {
+    it('should return a valid response when given a valid url hash', async () => {
       const dto = {
         correlation_id: correlationId,
         domain: domainName,
@@ -138,22 +178,58 @@ describe.only('ShortURLService', () => {
       const response = await service.update(dto)
       expect(response).toBeDefined()
       expect(response.message).toBe('success');
-      expect(typeof response.url).toBe('string');
+      expect(response.url).toBe(validUrl);
       expect(typeof response.shortened_url).toBe('string');
       expect(typeof response.url_hash).toBe('string');
       validUrlHash = response.url_hash
+      validShortenedUrl = response.shortened_url;
+    });
+
+    it('should return a null when given invalid url hash', async () => {
+      const dto = {
+        correlation_id: correlationId,
+        domain: domainName,
+        url_hash: invalidUrlHash,
+      };
+      const response = await service.update(dto);
+      expect(response).toBeNull();
+    });
+
+  });
+
+  describe('findAll', () => {
+    it('should return exactly one record', async () => {
+      const response = await service.findAll()
+      expect(response).toHaveLength(1);
     });
   });
 
   describe('delete', () => {
-    it('should return a valid response', async () => {
+    it('should return a valid response when given valid url hash', async () => {
       const dto = {
         correlation_id: correlationId,
         url_hash: validUrlHash,
       };
       const response = await service.delete(dto)
-      // expect(response).toBeInstanceOf(DeleteResult)
       expect(response.message).toBe('success')
+      expect(response.shortened_url).toBe(validShortenedUrl)
+      expect(response.url).toBe(validUrl)
+    });
+
+    it('should return a null when given invalid url hash', async () => {
+      const dto = {
+        correlation_id: correlationId,
+        url_hash: invalidUrlHash,
+      };
+      const response = await service.delete(dto)
+      expect(response).toBeNull();
+    });
+  });
+
+  describe('findAll', () => {
+    it('should return 0 records', async () => {
+      const response = await service.findAll()
+      expect(response).toHaveLength(0);
     });
   });
 

@@ -1,7 +1,7 @@
-import { IsNotEmpty } from 'class-validator';
+import { IsEmail, IsNotEmpty } from 'class-validator';
 
 export class loginDto {
-  @IsNotEmpty()
+  @IsEmail()
   readonly email: string;
 
   @IsNotEmpty()
@@ -20,7 +20,7 @@ export class registerDto {
   @IsNotEmpty()
   name: string;
 
-  @IsNotEmpty()
+  @IsEmail()
   email: string;
 
   @IsNotEmpty()

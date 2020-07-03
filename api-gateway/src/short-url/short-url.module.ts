@@ -26,8 +26,7 @@ export class ShortUrlModule implements NestModule {
   async configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(TracingMiddleware)
-      // .forRoutes(ShortURLController)
-      .forRoutes({ path: 'links/*', method: RequestMethod.GET })
+      .forRoutes(ShortURLController)
       .apply(AuthMiddleware)
       .exclude({ path: 'links/*', method: RequestMethod.GET })
       .forRoutes(ShortURLController);

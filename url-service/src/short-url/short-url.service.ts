@@ -4,6 +4,7 @@ import { Repository, getRepository } from 'typeorm'
 import { HttpException } from '@nestjs/common/exceptions/http.exception';
 import { HttpStatus } from '@nestjs/common';
 import { generate as generateShortID } from 'shortid';
+import { validate } from 'class-validator';
 
 import { ShortURLEntity, ShortURLEntityDAO } from './short-url.entity';
 import { UpdateURLRecordDAO, DeleteURLRecordDAO } from './short-url.interface';
@@ -23,24 +24,30 @@ export class ShortURLService {
     return `http://${host}/${urlHash}`;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private isDuplicateUrl = (urlHash: string ): boolean => {
-  // const isDuplicateUrl = async (urlHash: string ): Promise<boolean> => {
-    return false
+  // Prevent duplicates
+  private async isDuplicateUrlHash(urlHash: string ): Promise<boolean> {
+    const shortURLRecord = await getRepository(ShortURLEntity).findOne({ is_active: true, url_hash: urlHash });
+    if (shortURLRecord) return true;
+    return false;
   }
 
-  private getURLHash = (retryCount: number, skipDuplicateCheck = false): string => {
+  private async getURLHash(retryCount: number, skipDuplicateCheck = false): Promise<string> {
     if (retryCount == 0) return null
     const urlHash = generateShortID()
-    if (!skipDuplicateCheck && this.isDuplicateUrl(urlHash)) return this.getURLHash(retryCount-1) 
-    return generateShortID()
+    // if (!skipDuplicateCheck && this.isDuplicateUrlHash(urlHash)) return this.getURLHash(retryCount-1, skipDuplicateCheck) 
+
+    if (!skipDuplicateCheck) {
+      const isDuplicate = await this.isDuplicateUrlHash(urlHash)
+      if (isDuplicate) return this.getURLHash(retryCount-1, skipDuplicateCheck) 
+    }
+    return urlHash;
   };
 
   async ping(): Promise<string> {
     return 'Pong!';
   }
 
-  private buildShortUrlRO(shortURLRecord: ShortURLEntity) {
+  buildShortUrlRO(shortURLRecord: ShortURLEntity) {
     const shortUrlRO = {
       url_id: shortURLRecord.url_id,
       url: shortURLRecord.url,
@@ -53,7 +60,7 @@ export class ShortURLService {
   }
 
   async findAll(): Promise<ShortURLEntity[]> {
-    return await this.shortUrlRepository.find();
+    return await this.shortUrlRepository.find({ is_active: true });
   }
 
   async findById(shortUrlId: number): Promise<ShortURLEntityDAO>{
@@ -86,17 +93,13 @@ export class ShortURLService {
     return this.buildShortUrlRO(shortUrlRecord);
   }
 
-  async create(dto: Partial<CreateShortUrlDTO>): Promise<ShortURLEntityDAO> {
-    const qb = await getRepository(ShortURLEntity)
-      .createQueryBuilder('short_url')
-      .where('short_url.url = :url AND is_active = true ', dto);
-
-    const shortURLRecord = await qb.getOne();
+  async create(dto: CreateShortUrlDTO): Promise<ShortURLEntityDAO> {
+    const shortURLRecord = await this.shortUrlRepository.findOne({ is_active: true, url: dto.url });
     if (shortURLRecord) {
       return shortURLRecord;
     }
 
-    const urlHash = this.getURLHash(this.maxRetryCount);
+    const urlHash = await this.getURLHash(this.maxRetryCount);
     const shortUrl =  this.getShortURL(dto.domain, urlHash);
 
     const newShortUrlRecord = new ShortURLEntity();
@@ -108,11 +111,11 @@ export class ShortURLService {
     return this.buildShortUrlRO(savedPipeline);
   }
 
-  async update(updateShortUrlDTO: Partial<UpdateShortUrlDTO>): Promise<UpdateURLRecordDAO> {
+  async update(updateShortUrlDTO: UpdateShortUrlDTO): Promise<UpdateURLRecordDAO> {
     const toUpdate = await this.findByUrlHash(updateShortUrlDTO.url_hash);
     if (!toUpdate) return null;
 
-    const newURLHash = this.getURLHash(this.maxRetryCount);
+    const newURLHash = await this.getURLHash(this.maxRetryCount);
     const shortUrl =  this.getShortURL(updateShortUrlDTO.domain, newURLHash);
     const updateDTO = {
       url_hash: newURLHash,

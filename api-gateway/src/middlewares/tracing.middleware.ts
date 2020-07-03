@@ -50,7 +50,7 @@ export class TracingMiddleware implements NestMiddleware {
     return uuid.v4()
   }
 
-   async logRequest(request: Request) {
+  async logRequest(request: Request) {
     const headers = request.headers;
     const body = {};
     const query = {};
@@ -74,9 +74,10 @@ export class TracingMiddleware implements NestMiddleware {
     this.logger.log(`X-Correlation-Id :: ${correlationId}`)
     request.headers['X-Correlation-Id'] = correlationId;
     // await this.logRequest(request);
-    const result = await this.logRequest(request);
-    result.subscribe(res => {
-      return next();
-    });
+    if (request.method == 'GET') {
+      const result = await this.logRequest(request);
+      await result.toPromise()
+    }
+    return next();
   }
 }

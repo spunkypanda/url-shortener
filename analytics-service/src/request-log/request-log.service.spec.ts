@@ -58,7 +58,6 @@ describe('RequestLogService', () => {
       expect(requestDto.correlation_id).toBe(correlationId);
       expect(requestDto.action).toBe(actionName);
       expect(requestDto.url).toBe(dto.url);
-      expect(requestDto.status_code).toBe(dto.status_code);
       expect(requestDto.body).toBeInstanceOf(Object);
       expect(requestDto.query).toBeInstanceOf(Object);
       expect(requestDto.headers).toBeInstanceOf(Object);
