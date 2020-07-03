@@ -36,11 +36,15 @@ const logger = new Logger('Auth:Middleware');
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
+  private whiteLabelHost: string; 
 
   constructor(
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
-  ) {}
+  ) {
+    const defaultWhitelabelHost = process.env.WHITELABEL_HOST;
+    if (defaultWhitelabelHost) this.whiteLabelHost = defaultWhitelabelHost; 
+  }
 
   extractFromAuthToken(authorizationHeader: string): DecodedHostAndSecret {
     const authString = authorizationHeader.split('Bearer ')[1];
@@ -57,7 +61,7 @@ export class AuthMiddleware implements NestMiddleware {
     if (method == 'GET') return next();
 
     const authorizationHeader = headers['authorization'];
-    if (!authorizationHeader) return next();
+    if (!authorizationHeader && !this.whiteLabelHost) return next();
 
     logger.log(`Authorization Header:: ${authorizationHeader}`);
     const decodedHostAndSecret = this.extractFromAuthToken(authorizationHeader);
@@ -73,8 +77,8 @@ export class AuthMiddleware implements NestMiddleware {
     if (!userRecord) return next();
 
     request.headers['userId'] = userRecord.user_id;
-    request.headers['domain'] = userRecord.host;
-    request.headers['whitelabelHost'] = decodedHostAndSecret.host;
+    request.headers['domain'] = this.whiteLabelHost || userRecord.host;
+    request.headers['whitelabelHost'] = this.whiteLabelHost || userRecord.host;
     request.headers['whitelabelSecret'] = decodedHostAndSecret.secret;
     return next();
   }
