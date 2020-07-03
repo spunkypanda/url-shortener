@@ -25,6 +25,7 @@ export class ShortURLController {
   private clientProxy: ClientProxy;
   private defaultWhitelabelHost: string;
 
+  private linkCreatedActionName: string = 'LINK_CREATED';
   private linkFailedActionName: string = 'LINK_FAILED';
   private linkFoundActionName: string = 'LINK_FOUND';
 
@@ -47,7 +48,6 @@ export class ShortURLController {
 
   async logRequest(request: RequestBody, actionName: string, callback: Function) {
     const headers = request.headers;
-    const body = {};
     const query = {};
 
     const createRequestDto: CreateRequestDto = {
@@ -55,7 +55,7 @@ export class ShortURLController {
       action: actionName,
       url: request.url,
       headers,
-      body,
+      body: request.body,
       query,
     };
 
@@ -71,10 +71,20 @@ export class ShortURLController {
 
   @Post('links')
   @UseGuards(AuthGuard)
-  async createShortenedURL(@Headers() header: Record<string, string>, @Body() body: Readonly<CreateURLRecordDTO>) {
-    const correlationId:string = header['correlation_id'];
+  async createShortenedURL(
+    @Req() req: RequestBody,
+    @Response() res: ResponseBody,
+    @Headers() header: Record<string, string>,
+    @Body() body: Readonly<CreateURLRecordDTO>
+  ) {
+    const correlationId:string = header['X-Correlation-Id'];
     const domain:string = this.defaultWhitelabelHost || header['domain'];
-    return this.shortUrlService.create(correlationId, domain, body.url);
+    const result = await this.shortUrlService.create(correlationId, domain, body.url);
+    return result.subscribe(async (response) => {
+      this.logRequest(req, this.linkCreatedActionName, () => {
+        return res.json(response)
+      });
+    });
   }
 
   @Get('links/:url_hash')
@@ -103,7 +113,7 @@ export class ShortURLController {
   @Put('links/:url_hash')
   @UseGuards(AuthGuard)
   async updateShortenedURL(@Headers() header: Record<string, string>, @Param() params: Readonly<UpdateURLRecordDTO>): Promise<any> {
-    const correlationId:string = header['correlation_id'];
+    const correlationId:string = header['X-Correlation-Id'];
     const domain:string = this.defaultWhitelabelHost || header['domain'];
     const updatedRecord = await this.shortUrlService.update(correlationId, domain, params.url_hash);
     if (!updatedRecord) throw this.urlDoesntExistException;
@@ -113,7 +123,7 @@ export class ShortURLController {
   @Delete('links/:url_hash')
   @UseGuards(AuthGuard)
   async deleteShortenedURL(@Headers() header: Record<string, string>, @Param() params: Readonly<GetURLRecordDTO>): Promise<any> {
-    const correlationId:string = header['correlation_id'];
+    const correlationId:string = header['X-Correlation-Id'];
     // const domain:string = header['domain'];
     const deletedRecord = await this.shortUrlService.delete(correlationId, params.url_hash);
     if (!deletedRecord) throw this.urlDoesntExistException;

@@ -31,6 +31,7 @@ export class AppController {
       action: request.action,
       url: request.url,
       body: request.body,
+      headers: request.headers,
       query: request.query,
       params: request.params,
     }

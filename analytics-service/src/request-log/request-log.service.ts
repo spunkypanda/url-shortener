@@ -20,8 +20,6 @@ export class RequestLogService {
     requestRecord.headers = dto.headers;
     requestRecord.body = dto.body;
     requestRecord.query = dto.query;
-    requestRecord.response = dto.response;
-    requestRecord.status_code = dto.status_code;
     return this.requestRepository.save(requestRecord);
   }
 

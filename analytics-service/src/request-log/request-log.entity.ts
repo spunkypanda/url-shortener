@@ -22,12 +22,6 @@ export class RequestEntity {
   
   @Column({ nullable: true, type: "json", default: {} })
   query: Record<string, unknown>;
-  
-  @Column({ nullable: true, type: "json", default: {} })
-  response: Record<string, unknown>; 
-
-  @Column({ nullable: true })
-  status_code: number;  
 
   @Column({ type: "timestamp without time zone", default: new Date() })
   timestamp: Date;  
