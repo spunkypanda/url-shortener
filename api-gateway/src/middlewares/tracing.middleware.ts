@@ -31,6 +31,7 @@ interface RequestEntity {
 export class TracingMiddleware implements NestMiddleware {
   private logger: Logger;
   private clientProxy: ClientProxy;
+  private linkQueriedActionName: string = 'LINK_QUERIED';
 
   constructor() {
     this.logger = new Logger('TracingMiddleware');
@@ -58,7 +59,7 @@ export class TracingMiddleware implements NestMiddleware {
 
     const createRequestDto: CreateRequestDto = {
       correlation_id: request.headers['X-Correlation-Id'],
-      action: 'LINK_QUERIED',
+      action: this.linkQueriedActionName,
       url: request.url,
       headers,
       body,

@@ -25,6 +25,9 @@ export class ShortURLController {
   private clientProxy: ClientProxy;
   private defaultWhitelabelHost: string;
 
+  private linkFailedActionName: string = 'LINK_FAILED';
+  private linkFoundActionName: string = 'LINK_FOUND';
+
   private readonly urlDoesntExistExceptionError: Record<string, any> =  { message: 'Url does not exist.' };
   private readonly urlDoesntExistException: HttpException = new HttpException(this.urlDoesntExistExceptionError, HttpStatus.NOT_FOUND);
 
@@ -84,13 +87,13 @@ export class ShortURLController {
 
     return result.subscribe(async (result) => {
       if (!result) {
-        await this.logRequest(req, 'LINK_FAILED', () => {
+        await this.logRequest(req, this.linkFailedActionName, () => {
           return res
             .status(HttpStatus.NOT_FOUND)
             .json(this.urlDoesntExistExceptionError);
         })
       }
-      await this.logRequest(req, 'LINK_FOUND', () => {
+      await this.logRequest(req, this.linkFoundActionName, () => {
         return res.redirect(result.url)
       });
     });
