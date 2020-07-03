@@ -1,5 +1,5 @@
-import { Controller, UseGuards, Response, Body, Get, Param, ParamData, Post, Delete, Put, Req, Request, HttpCode  } from '@nestjs/common';
-import { ExecutionContext, Injectable, CallHandler, NestInterceptor, NestMiddleware, UseInterceptors } from '@nestjs/common';
+import { Controller, UseGuards, Response, Body, Get, Param, Post, Delete, Put, Req, Headers  } from '@nestjs/common';
+import { ExecutionContext, Injectable, CallHandler, NestInterceptor } from '@nestjs/common';
 import { Response as ResponseBody, Request as RequestBody } from 'express';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { HttpException } from '@nestjs/common/exceptions/http.exception';
@@ -66,8 +66,10 @@ export class ShortURLController {
 
   @Post('links')
   @UseGuards(AuthGuard)
-  async createShortenedURL(@Body() body: Readonly<CreateURLRecordDTO>) {
-    return this.shortUrlService.create(body.url);
+  async createShortenedURL(@Headers() header: Record<string, string>, @Body() body: Readonly<CreateURLRecordDTO>) {
+    const correlationId:string = header['correlation_id'];
+    const domain:string = header['domain'];
+    return this.shortUrlService.create(correlationId, domain, body.url);
   }
 
   @Get('links/:url_hash')
@@ -95,16 +97,20 @@ export class ShortURLController {
 
   @Put('links/:url_hash')
   @UseGuards(AuthGuard)
-  async updateShortenedURL(@Param() params: Readonly<UpdateURLRecordDTO>): Promise<any> {
-    const updatedRecord = await this.shortUrlService.update(params.url_hash);
+  async updateShortenedURL(@Headers() header: Record<string, string>, @Param() params: Readonly<UpdateURLRecordDTO>): Promise<any> {
+    const correlationId:string = header['correlation_id'];
+    const domain:string = header['domain'];
+    const updatedRecord = await this.shortUrlService.update(correlationId, domain, params.url_hash);
     if (!updatedRecord) throw this.urlDoesntExistException;
     return updatedRecord;
   }
 
   @Delete('links/:url_hash')
   @UseGuards(AuthGuard)
-  async deleteShortenedURL(@Param() params: Readonly<GetURLRecordDTO>): Promise<any> {
-    const deletedRecord = await this.shortUrlService.delete(params.url_hash);
+  async deleteShortenedURL(@Headers() header: Record<string, string>, @Param() params: Readonly<GetURLRecordDTO>): Promise<any> {
+    const correlationId:string = header['correlation_id'];
+    // const domain:string = header['domain'];
+    const deletedRecord = await this.shortUrlService.delete(correlationId, params.url_hash);
     if (!deletedRecord) throw this.urlDoesntExistException;
 
     return deletedRecord

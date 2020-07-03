@@ -1,14 +1,12 @@
-import { Controller, UseGuards, CanActivate, Response, Body, Get, Param, ParamData, Post, Delete, Put, HttpCode, Logger } from '@nestjs/common';
-import { ExecutionContext, Injectable, CallHandler, NestInterceptor, NestMiddleware, UseInterceptors } from '@nestjs/common';
-import { Response as ResponseBody } from 'express';
+import { Controller, Logger } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { HttpException } from '@nestjs/common/exceptions/http.exception';
 import { HttpStatus } from '@nestjs/common';
-import { ClientOptions, MessagePattern, Transport } from '@nestjs/microservices';
+import { MessagePattern } from '@nestjs/microservices';
 
 import { ShortURLService } from './short-url.service';
 import { ShortenedURLDAO } from './short-url.interface';
-// import { AuthGuard } from 'src/app.controller';
+import { CreateShortUrlDTO, UpdateShortUrlDTO, DeleteShortUrlDTO } from './short-url.dto';
 
 @ApiBearerAuth()
 @ApiTags('short_url')
@@ -29,10 +27,9 @@ export class ShortURLController {
   }
 
   @MessagePattern('links:create')
-  async createShortenedURL(url: string): Promise<Partial<ShortenedURLDAO>> {
-    this.logger.log(`url: ${url}`);
-    const createDTO = { url };
-    return this.shortUrlService.create(createDTO);
+  async createShortenedURL(createShortUrlDTO: CreateShortUrlDTO): Promise<Partial<ShortenedURLDAO>> {
+    this.logger.log(`url: ${createShortUrlDTO.url}`);
+    return this.shortUrlService.create(createShortUrlDTO);
   }
 
   @MessagePattern('links:get')
@@ -42,17 +39,17 @@ export class ShortURLController {
   }
 
   @MessagePattern('links:update')
-  async updateShortenedURL(urlHash: string): Promise<any> {
-    this.logger.log(`urlHash: ${urlHash}`);
-    const updatedRecord = await this.shortUrlService.update(urlHash);
+  async updateShortenedURL(updateShortUrlDTO: UpdateShortUrlDTO): Promise<any> {
+    this.logger.log(`urlHash: ${updateShortUrlDTO.url_hash}`);
+    const updatedRecord = await this.shortUrlService.update(updateShortUrlDTO);
     if (!updatedRecord) throw this.urlDoesntExistException;
     return updatedRecord;
   }
 
   @MessagePattern('links:delete')
-  async deleteShortenedURL(urlHash: string): Promise<any> {
-    this.logger.log(`urlHash: ${urlHash}`);
-    const deletedRecord = await this.shortUrlService.delete(urlHash);
+  async deleteShortenedURL(deleteShortUrlDTO: DeleteShortUrlDTO): Promise<any> {
+    this.logger.log(`urlHash: ${deleteShortUrlDTO.url_hash}`);
+    const deletedRecord = await this.shortUrlService.delete(deleteShortUrlDTO);
     if (!deletedRecord) throw this.urlDoesntExistException;
     return deletedRecord
   }

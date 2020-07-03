@@ -56,9 +56,6 @@ export class AuthMiddleware implements NestMiddleware {
     const method = request.method;
     if (method == 'GET') return next();
 
-    logger.log('Headers');
-    logger.log(headers);
-
     const authorizationHeader = headers['authorization'];
     if (!authorizationHeader) return next();
 

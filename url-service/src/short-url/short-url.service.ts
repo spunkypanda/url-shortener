@@ -7,7 +7,7 @@ import { generate as generateShortID } from 'shortid';
 
 import { ShortURLEntity, ShortURLEntityDAO } from './short-url.entity';
 import { UpdateURLRecordDAO, DeleteURLRecordDAO } from './short-url.interface';
-import { CreateShortUrlDTO } from './short-url.dto';
+import { CreateShortUrlDTO, UpdateShortUrlDTO, DeleteShortUrlDTO } from './short-url.dto';
 
 @Injectable()
 export class ShortURLService {
@@ -109,8 +109,8 @@ export class ShortURLService {
     return this.buildShortUrlRO(savedPipeline);
   }
 
-  async update(urlHash: string): Promise<UpdateURLRecordDAO> {
-    const toUpdate = await this.findByUrlHash(urlHash);
+  async update(updateShortUrlDTO: Partial<UpdateShortUrlDTO>): Promise<UpdateURLRecordDAO> {
+    const toUpdate = await this.findByUrlHash(updateShortUrlDTO.url_hash);
     if (!toUpdate) return null;
 
     const newURLHash = this.getURLHash(this.maxRetryCount);
@@ -130,8 +130,8 @@ export class ShortURLService {
     });
   }
 
-  async delete(urlHash: string): Promise<DeleteURLRecordDAO> {
-    const existingUrlRecord = await this.findByUrlHash(urlHash);
+  async delete(deleteShortUrlDTO: DeleteShortUrlDTO): Promise<DeleteURLRecordDAO> {
+    const existingUrlRecord = await this.findByUrlHash(deleteShortUrlDTO.url_hash);
     if (!existingUrlRecord) {
       return null;
     }
