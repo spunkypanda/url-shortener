@@ -73,6 +73,7 @@ export class AuthMiddleware implements NestMiddleware {
     if (!userRecord) return next();
 
     request.headers['userId'] = userRecord.user_id;
+    request.headers['domain'] = userRecord.host;
     request.headers['whitelabelHost'] = decodedHostAndSecret.host;
     request.headers['whitelabelSecret'] = decodedHostAndSecret.secret;
     return next();

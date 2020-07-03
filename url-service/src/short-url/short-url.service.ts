@@ -13,7 +13,6 @@ import { CreateShortUrlDTO, UpdateShortUrlDTO, DeleteShortUrlDTO } from './short
 export class ShortURLService {
 
   private maxRetryCount: number = 3; 
-  private whitelabelHost: string = "www.chinmay.com";
 
   constructor(
     @InjectRepository(ShortURLEntity)
@@ -98,7 +97,7 @@ export class ShortURLService {
     }
 
     const urlHash = this.getURLHash(this.maxRetryCount);
-    const shortUrl =  this.getShortURL(this.whitelabelHost, urlHash);
+    const shortUrl =  this.getShortURL(dto.domain, urlHash);
 
     const newShortUrlRecord = new ShortURLEntity();
     newShortUrlRecord.url = dto.url;
@@ -114,7 +113,7 @@ export class ShortURLService {
     if (!toUpdate) return null;
 
     const newURLHash = this.getURLHash(this.maxRetryCount);
-    const shortUrl =  this.getShortURL(this.whitelabelHost, newURLHash);
+    const shortUrl =  this.getShortURL(updateShortUrlDTO.domain, newURLHash);
     const updateDTO = {
       url_hash: newURLHash,
       shortened_url: shortUrl,

@@ -15,9 +15,6 @@ const microserviceOptions = {
 };
 
 async function bootstrap() {
-  console.log("##", process.env.ANALYTICS_SERVICE_HOST);
-  console.log("##", parseInt(process.env.ANALYTICS_SERVICE_PORT));
-
   const app = await NestFactory.createMicroservice(AppModule, microserviceOptions);
   await app.listen(() => {
     logger.log("Analytics Service is listening...")

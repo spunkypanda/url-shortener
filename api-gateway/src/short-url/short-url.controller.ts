@@ -23,11 +23,13 @@ export class LoggingInterceptor implements NestInterceptor {
 @Controller()
 export class ShortURLController {
   private clientProxy: ClientProxy;
+  private defaultWhitelabelHost: string;
 
   private readonly urlDoesntExistExceptionError: Record<string, any> =  { message: 'Url does not exist.' };
   private readonly urlDoesntExistException: HttpException = new HttpException(this.urlDoesntExistExceptionError, HttpStatus.NOT_FOUND);
 
   constructor(private readonly shortUrlService: ShortURLService) {
+    this.defaultWhitelabelHost = process.env.WHITELABEL_HOST;
 
     const microserviceOptions: ClientOptions = {
       transport: Transport.TCP,
@@ -68,7 +70,7 @@ export class ShortURLController {
   @UseGuards(AuthGuard)
   async createShortenedURL(@Headers() header: Record<string, string>, @Body() body: Readonly<CreateURLRecordDTO>) {
     const correlationId:string = header['correlation_id'];
-    const domain:string = header['domain'];
+    const domain:string = this.defaultWhitelabelHost || header['domain'];
     return this.shortUrlService.create(correlationId, domain, body.url);
   }
 
@@ -99,7 +101,7 @@ export class ShortURLController {
   @UseGuards(AuthGuard)
   async updateShortenedURL(@Headers() header: Record<string, string>, @Param() params: Readonly<UpdateURLRecordDTO>): Promise<any> {
     const correlationId:string = header['correlation_id'];
-    const domain:string = header['domain'];
+    const domain:string = this.defaultWhitelabelHost || header['domain'];
     const updatedRecord = await this.shortUrlService.update(correlationId, domain, params.url_hash);
     if (!updatedRecord) throw this.urlDoesntExistException;
     return updatedRecord;
