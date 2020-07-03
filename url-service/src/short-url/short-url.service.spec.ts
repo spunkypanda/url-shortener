@@ -1,8 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ShortURLService } from './short-url.service';
 import { Repository, createConnection, getConnection, getRepository, DeleteResult } from 'typeorm';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import * as uuid from 'uuid';
+
+import { ShortURLService } from './short-url.service';
+
 import { ShortURLEntity } from './short-url.entity';
+import { domain } from 'process';
+
 
 describe.only('ShortURLService', () => {
   let service: ShortURLService;
@@ -11,6 +16,10 @@ describe.only('ShortURLService', () => {
   let validUrlId: number;
   let validUrl: string;
   let validUrlHash: string;
+
+  const correlationId: string = uuid.v4();
+  const domainName: string = "www.bit.ly";
+
   const invalidUrl: string = 'randomrandom';
   const invalidUrlHash: string = 'randomrandom';
 
@@ -54,6 +63,8 @@ describe.only('ShortURLService', () => {
   describe('create', () => {
     it('should return a valid response', async () => {
       const createDto = {
+        correlation_id: correlationId,
+        domain: domainName,
         url: 'www.google.com',
       };
       const response = await service.create(createDto)
@@ -119,7 +130,12 @@ describe.only('ShortURLService', () => {
 
   describe('update', () => {
     it('should return a valid response', async () => {
-      const response = await service.update(validUrlHash)
+      const dto = {
+        correlation_id: correlationId,
+        domain: domainName,
+        url_hash: validUrlHash,
+      };
+      const response = await service.update(dto)
       expect(response).toBeDefined()
       expect(response.message).toBe('success');
       expect(typeof response.url).toBe('string');
@@ -131,7 +147,11 @@ describe.only('ShortURLService', () => {
 
   describe('delete', () => {
     it('should return a valid response', async () => {
-      const response = await service.delete(validUrlHash)
+      const dto = {
+        correlation_id: correlationId,
+        url_hash: validUrlHash,
+      };
+      const response = await service.delete(dto)
       // expect(response).toBeInstanceOf(DeleteResult)
       expect(response.message).toBe('success')
     });
