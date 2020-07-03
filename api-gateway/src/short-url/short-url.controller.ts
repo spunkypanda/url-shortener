@@ -1,6 +1,7 @@
 import { Controller, UseGuards, Response, Body, Get, Param, Post, Delete, Put } from '@nestjs/common';
 import { Req, Headers, UseFilters, Catch, ArgumentsHost, ExceptionFilter } from '@nestjs/common';
 import { ExecutionContext, Injectable, CallHandler, NestInterceptor } from '@nestjs/common';
+import { ClientOptions, Transport, ClientProxyFactory, ClientProxy } from '@nestjs/microservices';
 import { Response as ResponseBody, Request as RequestBody, response } from 'express';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { HttpException } from '@nestjs/common/exceptions/http.exception';
@@ -10,7 +11,8 @@ import { ShortURLService } from './short-url.service';
 import { CreateURLRecordDto, UpdateURLRecordDto, GetURLRecordDto } from './short-url.interface';
 import { CreateRequestDto } from './short-url.dto';
 import { AuthGuard } from 'src/app.controller';
-import { ClientOptions, Transport, ClientProxyFactory, ClientProxy } from '@nestjs/microservices';
+import { ErrorResponse, SuccessResponse } from 'src/shared/response.dto';
+
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
@@ -27,9 +29,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const status = exception.getStatus();
     const message = exception.getResponse();
 
+    new ErrorResponse(String(message))
+
     response
       .status(status)
-      .json({ message });
+      .json(new ErrorResponse(String(message)));
   }
 }
 
@@ -44,6 +48,8 @@ export class ShortURLController {
   private linkCreatedActionName: string = 'LINK_CREATED';
   private linkFailedActionName: string = 'LINK_FAILED';
   private linkFoundActionName: string = 'LINK_FOUND';
+  private linkUpdatedActionName: string = 'LINK_UPDATED';
+  private linkDeletedActionName: string = 'LINK_DELETED';
 
   private readonly urlDoesntExistExceptionError: string =  'Url does not exist.';
   private readonly urlDoesntExistException: HttpException = new HttpException(this.urlDoesntExistExceptionError, HttpStatus.NOT_FOUND);
@@ -100,7 +106,7 @@ export class ShortURLController {
 
     try {
       const response = await result.toPromise();
-      this.logRequest(req, this.linkCreatedActionName, () =>  res.json(response));
+      this.logRequest(req, this.linkCreatedActionName, () =>  res.json(new SuccessResponse(response)));
     } catch (error) {
       throw new HttpException(error, HttpStatus.BAD_REQUEST)
     }
@@ -128,21 +134,6 @@ export class ShortURLController {
       throw this.urlDoesntExistException;
       // throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
     }
-
-    /*
-    return result.subscribe(async (result) => {
-      if (!result) {
-        await this.logRequest(req, this.linkFailedActionName, () => {
-          return res
-            .status(HttpStatus.NOT_FOUND)
-            .json(this.urlDoesntExistExceptionError);
-        })
-      }
-      await this.logRequest(req, this.linkFoundActionName, () => {
-        return res.redirect(result.url)
-      });
-    });
-    */
   }
 
   @Put('links/:url_hash')
@@ -159,12 +150,10 @@ export class ShortURLController {
     const result = await this.shortUrlService.update(correlationId, domain, params.url_hash);
     try {
       const response = await result.toPromise();
-      this.logRequest(req, this.linkCreatedActionName, () => res.json(response));
+      this.logRequest(req, this.linkUpdatedActionName, () => res.json(new SuccessResponse(response)));
     } catch (error) {
       throw new HttpException(error, HttpStatus.BAD_REQUEST)
     }
-    // if (!updatedRecord) throw this.urlDoesntExistException;
-    // return updatedRecord;
   }
 
   @Delete('links/:url_hash')
@@ -181,7 +170,7 @@ export class ShortURLController {
     const result = await this.shortUrlService.delete(correlationId, params.url_hash);
     try {
       const response = await result.toPromise();
-      this.logRequest(req, this.linkCreatedActionName, () => res.json(response));
+      this.logRequest(req, this.linkDeletedActionName, () => res.json(new SuccessResponse(response)));
     } catch (error) {
       throw new HttpException(error, HttpStatus.BAD_REQUEST)
     }

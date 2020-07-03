@@ -50,7 +50,7 @@
 						"id": "7d7aad48-5213-4888-8b25-2f848c219dc1",
 						"exec": [
 							"const body = JSON.parse(responseBody)",
-							"const { host, secret } = body;",
+							"const { host, secret } = body.data;",
 							"const authToken = `Bearer ${host}:${secret}`;",
 							"pm.environment.set(\"authToken\", authToken);"
 						],
@@ -99,7 +99,7 @@
 						"id": "664ac535-83fa-4f90-ad93-9b80921b0c1a",
 						"exec": [
 							"const body = JSON.parse(responseBody)",
-							"const { host, secret } = body;",
+							"const { host, secret } = body.data;",
 							"const authToken = `Bearer ${host}:${secret}`;",
 							"pm.environment.set(\"authToken\", authToken);"
 						],
