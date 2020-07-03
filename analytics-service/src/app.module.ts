@@ -6,15 +6,13 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { RequestLogService } from './request-log/request-log.service';
 
-import { DB } from './config'
+import { getDBOptions } from './config'
 import { RequestLogModule } from './request-log/request-log.module';
-
-const typeOrmImport = TypeOrmModule.forRoot(DB)
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
-    typeOrmImport, 
+    TypeOrmModule.forRoot(getDBOptions()),
     RequestLogModule,
   ],
   controllers: [AppController],
