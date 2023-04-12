@@ -34,7 +34,7 @@
     "rimraf": "^3.0.2",
     "rxjs": "^6.5.4",
     "shortid": "^2.2.15",
-    "typeorm": "^0.2.25",
+    "typeorm": "^0.3.14",
     "uuid": "^8.2.0"
   },
   "devDependencies": {
